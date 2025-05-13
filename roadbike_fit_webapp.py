@@ -1,86 +1,98 @@
-
 import streamlit as st
 
-# 多語言切換
-lang = st.selectbox("語言 / Language", ["繁體中文", "English"])
+# 頁面設定必須為第一個 st 指令
+st.set_page_config(page_title="公路車尺寸建議工具 | Roadbike Fit Tool", layout="centered")
 
-text = {
+# 多語言支援文字
+TEXT = {
     "繁體中文": {
         "title": "🚴‍♂️ 公路車尺寸建議工具",
-        "input_prompt": "請輸入下列身體尺寸資料：",
+        "intro": "請輸入下列身體尺寸資料：",
         "inseam": "跨下長（cm）",
         "height": "身高（cm）",
         "shoulder": "肩寬（cm）",
         "ischial": "坐骨寬（cm）",
-        "calculate": "計算建議",
+        "predict": "計算建議",
         "result": "📄 建議結果",
-        "saddle": "建議座墊高度",
+        "saddle_height": "建議座墊高度",
         "stack": "建議 Stack",
         "reach": "建議 Reach",
-        "stem": "使用龍頭長度",
-        "seatwidth": "建議坐墊寬度",
-        "compare": "🚲 預計購買的車架幾何",
-        "bike_stack": "車架 Stack（mm）",
-        "bike_reach": "車架 Reach（mm）",
-        "diff_stack": "與建議 Stack 差值",
-        "diff_reach": "與建議 Reach 差值",
-        "donate": "☕ 贊助一杯咖啡",
-        "donate_link": "https://paypal.me/leopardbikeadvice"
+        "bar_width": "建議把手寬度",
+        "saddle_width": "建議坐墊寬度",
+        "bike_input": "📦 預計購買的車架幾何（Stack / Reach）",
+        "stack_input": "車架 Stack",
+        "reach_input": "車架 Reach",
+        "compare_result": "✅ 幾何比對結果",
+        "sponsor": "☕ 喜歡這個工具嗎？[贊助一杯咖啡](https://paypal.me/leopardbikeadvice)",
+        "?_inseam": "（坐骨結節 → 腳跟/地面）",
+        "?_height": "（頭頂 → 地面）",
+        "?_shoulder": "（左右肩峰）",
+        "?_ischial": "（左右坐骨結節）",
     },
     "English": {
-        "title": "🚴‍♂️ Roadbike Fit Recommendation Tool",
-        "input_prompt": "Please enter your body measurements:",
+        "title": "🚴‍♂️ Roadbike Fit Suggestion Tool",
+        "intro": "Please enter your body measurements below:",
         "inseam": "Inseam (cm)",
         "height": "Height (cm)",
-        "shoulder": "Shoulder width (cm)",
-        "ischial": "Ischial width (cm)",
-        "calculate": "Get Recommendation",
-        "result": "📄 Recommendation Result",
-        "saddle": "Recommended Saddle Height",
+        "shoulder": "Shoulder Width (cm)",
+        "ischial": "Ischial Width (cm)",
+        "predict": "Calculate Suggestion",
+        "result": "📄 Suggested Fit",
+        "saddle_height": "Recommended Saddle Height",
         "stack": "Recommended Stack",
         "reach": "Recommended Reach",
-        "stem": "Stem Length Used",
-        "seatwidth": "Recommended Saddle Width",
-        "compare": "🚲 Geometry of Bike You Plan to Purchase",
-        "bike_stack": "Bike Stack (mm)",
-        "bike_reach": "Bike Reach (mm)",
-        "diff_stack": "Stack Difference",
-        "diff_reach": "Reach Difference",
-        "donate": "☕ Buy me a coffee",
-        "donate_link": "https://paypal.me/leopardbikeadvice"
+        "bar_width": "Recommended Handlebar Width",
+        "saddle_width": "Recommended Saddle Width",
+        "bike_input": "📦 Geometry of Frame You Plan to Buy (Stack / Reach)",
+        "stack_input": "Frame Stack",
+        "reach_input": "Frame Reach",
+        "compare_result": "✅ Geometry Comparison",
+        "sponsor": "☕ Like this tool? [Buy me a coffee](https://paypal.me/leopardbikeadvice)",
+        "?_inseam": "(Ischial Tuberosity → Floor)",
+        "?_height": "(Top of Head → Floor)",
+        "?_shoulder": "(Acromion to Acromion)",
+        "?_ischial": "(Between Ischial Tuberosities)",
     }
-}[lang]
+}
 
-st.set_page_config(page_title=text["title"], layout="centered")
+# 語言選擇
+lang = st.selectbox("語言 / Language", options=["繁體中文", "English"])
+text = TEXT[lang]
+
 st.title(text["title"])
-st.write(text["input_prompt"])
+st.markdown(text["intro"])
 
-inseam = st.number_input(text["inseam"], 60.0, 100.0, step=0.5)
-height = st.number_input(text["height"], 140.0, 200.0, step=0.5)
-shoulder = st.number_input(text["shoulder"], 30.0, 50.0, step=0.5)
-ischial = st.number_input(text["ischial"], 8.0, 20.0, step=0.5)
+# 使用者輸入欄位
+inseam = st.number_input(f"{text['inseam']} {text['?_inseam']}", min_value=40.0, max_value=120.0, value=80.0)
+height = st.number_input(f"{text['height']} {text['?_height']}", min_value=140.0, max_value=210.0, value=175.0)
+shoulder = st.number_input(f"{text['shoulder']} {text['?_shoulder']}", min_value=30.0, max_value=60.0, value=42.0)
+ischial = st.number_input(f"{text['ischial']} {text['?_ischial']}", min_value=8.0, max_value=20.0, value=13.0)
 
-st.write("---")
-st.subheader(text["compare"])
-bike_stack = st.number_input(text["bike_stack"], 400.0, 650.0, step=1.0)
-bike_reach = st.number_input(text["bike_reach"], 350.0, 450.0, step=1.0)
-stem_length = st.slider(text["stem"], 80, 120, 100, step=10)
+st.markdown("---")
 
-if st.button(text["calculate"]):
+# 車架幾何輸入
+st.markdown(text["bike_input"])
+input_stack = st.number_input(f"{text['stack_input']} (mm)", min_value=400, max_value=700, value=570)
+input_reach = st.number_input(f"{text['reach_input']} (mm)", min_value=350, max_value=450, value=390)
+
+if st.button(text["predict"]):
+    st.markdown("## " + text["result"])
     saddle_height = round(inseam * 0.883, 1)
-    recommended_stack = round(height * 0.32 * 10, 1)
-    recommended_reach = round((height * 0.26 * 10) + (stem_length - 100), 1)
-    seat_width = f"{ischial + 2.0:.1f}–{ischial + 4.0:.1f}"
+    stack = round(height * 0.32 * 10, 1)
+    reach = round((height * 0.22) * 10, 1)
+    bar_width = f"{shoulder - 1}–{shoulder + 1}"
+    saddle_width = f"{ischial + 1.0}–{ischial + 1.5}"
 
-    stack_diff = round(bike_stack - recommended_stack, 1)
-    reach_diff = round(bike_reach - recommended_reach, 1)
+    st.write(f"📐 {text['saddle_height']}：{saddle_height} cm")
+    st.write(f"📐 {text['stack']}：{stack} mm")
+    st.write(f"📐 {text['reach']}：{reach} mm")
+    st.write(f"📐 {text['bar_width']}：{bar_width} cm")
+    st.write(f"🪑 {text['saddle_width']}：{saddle_width} cm")
 
-    st.subheader(text["result"])
-    st.write(f"📐 {text['saddle']}：{saddle_height} cm")
-    st.write(f"📐 {text['stack']}：{recommended_stack} mm")
-    st.write(f"📐 {text['reach']}：{recommended_reach} mm （{text['stem']} {stem_length} mm）")
-    st.write(f"📏 {text['diff_stack']}：{stack_diff} mm")
-    st.write(f"📏 {text['diff_reach']}：{reach_diff} mm")
-    st.write(f"🪑 {text['seatwidth']}：{seat_width} cm")
+    st.markdown("---")
+    st.subheader(text["compare_result"])
+    st.write(f"🔼 {text['stack']} 差值：{round(input_stack - stack, 1)} mm")
+    st.write(f"🔼 {text['reach']} 差值：{round(input_reach - reach, 1)} mm")
 
-st.markdown(f"<br><a href='{text['donate_link']}' target='_blank'>{text['donate']}</a>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown(text["sponsor"])
