@@ -128,7 +128,7 @@ if st.button(text["submit"]):
         saddle_height = round(inseam * 0.883, 1)
         st.markdown(f"📏 {text['saddle_height']} {saddle_height} {text['unit_cm']}")
 
-        stack = round((sacrum + leg) * 2.0, 1)
+        stack = round((sacrum + leg) * 2.8, 1)
         stack_diff = round(stack - input_stack, 1)
         if abs(stack_diff) <= 30:
             spacer_cm = 0.5 * round(abs(stack_diff) / 5 + 1)
@@ -136,7 +136,7 @@ if st.button(text["submit"]):
         else:
             st.markdown(f"📐 {text['stack_suggest']} {stack} {text['unit_mm']}　{text['stack_diff']} {stack_diff} mm（{text['stack_exceed']}）")
 
-        reach = round(trunk * 2.5 * 10, 1)  # 轉為 mm
+        reach = round(trunk * 5.5, 1)  # 推算出來會在 350~410 mm 區間，符合真實值
         reach_diff = round(input_reach - reach, 1)
         stem_cm = round(reach_diff / 10)
         if 7 <= stem_cm <= 12:
