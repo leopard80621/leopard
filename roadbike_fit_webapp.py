@@ -137,7 +137,7 @@ if st.button(text["submit"]):
             st.markdown(f"📐 {text['stack_suggest']} {stack} {text['unit_mm']}　{text['stack_diff']} {stack_diff} mm（{text['stack_exceed']}）")
 
                 # Reach 建議（已更新為 trunk * 6.0）
-        reach = round(trunk * 6.0 * 10, 1)  # trunk 轉為 mm
+        reach = round(trunk * 6.0 * 1, 1)  # trunk 轉為 mm
         reach_diff = round(input_reach - reach, 1)
         stem_cm = round(reach_diff / 10)
 
