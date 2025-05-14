@@ -125,9 +125,11 @@ if st.button(text["submit"]):
         shoulder = user_inputs["shoulder"]
         sit_bone = user_inputs["sitbone"]
 
+        # 建議座墊高度
         saddle_height = round(inseam * 0.883, 1)
         st.markdown(f"📏 {text['saddle_height']} {saddle_height} {text['unit_cm']}")
 
+        # 建議 Stack 計算
         stack = round((sacrum + leg) * 2.8, 1)
         stack_diff = round(stack - input_stack, 1)
         if abs(stack_diff) <= 30:
@@ -136,8 +138,8 @@ if st.button(text["submit"]):
         else:
             st.markdown(f"📐 {text['stack_suggest']} {stack} {text['unit_mm']}　{text['stack_diff']} {stack_diff} mm（{text['stack_exceed']}）")
 
-                # Reach 建議（已更新為 trunk * 6.0）
-      reach = round(trunk * 6.0, 1)  # 輸出單位是 mm
+        # 建議 Reach 計算
+        reach = round(trunk * 6.0, 1)  # trunk in cm, reach in mm via empirical ratio
         reach_diff = round(input_reach - reach, 1)
         stem_cm = round(reach_diff / 10)
 
@@ -147,11 +149,15 @@ if st.button(text["submit"]):
             direction = "小" if reach_diff < 0 else "大" if language == "繁體中文" else "smaller" if reach_diff < 0 else "larger"
             st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
 
+        # 把手寬度
         st.markdown(f"🤝 {text['shoulder_suggest']} {round(shoulder)} ±2 {text['unit_cm']}")
+
+        # 坐墊寬度
         pad = 2.0 if gender in ["男性", "Male"] else 3.0
         sit_width = round(sit_bone + pad, 1)
         st.markdown(f"🍑 {text['sitbone_suggest']} {sit_width} {text['unit_cm']}")
 
+        # 曲柄建議
         if gender in ["男性", "Male"]:
             crank = 175 if height >= 185 else 172.5 if height >= 175 else 170 if height >= 165 else 165 if height >= 155 else 160
         else:
