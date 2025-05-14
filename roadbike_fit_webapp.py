@@ -136,9 +136,11 @@ if st.button(text["submit"]):
         else:
             st.markdown(f"📐 {text['stack_suggest']} {stack} {text['unit_mm']}　{text['stack_diff']} {stack_diff} mm（{text['stack_exceed']}）")
 
-        reach = round(trunk * 5.5, 1)  # 推算出來會在 350~410 mm 區間，符合真實值
+                # Reach 建議（已更新為 trunk * 6.0）
+        reach = round(trunk * 6.0 * 10, 1)  # trunk 轉為 mm
         reach_diff = round(input_reach - reach, 1)
         stem_cm = round(reach_diff / 10)
+
         if 7 <= stem_cm <= 12:
             st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(stem_length=stem_cm)}）")
         else:
