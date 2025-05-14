@@ -81,6 +81,13 @@ if st.button(text["submit"]):
             pad = 2.0 if gender in ["男性", "Male"] else 3.0
             st.markdown(text["sitbone_suggest"].format(value=round(sitbone + pad, 1)))
 
+        # 建議曲柄長度
+        if gender in ["男性", "Male"]:
+            crank = 172.5 if height >= 185 else 170 if height >= 175 else 167.5 if height >= 165 else 162.5 if height >= 155 else 157.5
+        else:
+            crank = 170 if height >= 175 else 167.5 if height >= 165 else 162.5 if height >= 155 else 157.5
+        st.markdown(text["crank_suggest"].format(value=crank))
+
         # 贊助連結
         st.markdown("---")
         st.markdown(f"{text['support']} [☕ Buy here]({text['support_link']})")
