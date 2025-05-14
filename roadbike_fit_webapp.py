@@ -1,109 +1,111 @@
-
 import streamlit as st
 
-# ======================
-# ⚙️ 1. 頁面基本設定
-# ======================
+# 頁面設定
 st.set_page_config(page_title="公路車尺寸建議工具", layout="centered")
 
-# ======================
-# 🌐 2. 中英文語系切換
-# ======================
-lang = st.selectbox("語言 / Language", ["繁體中文", "English"])
-is_tw = lang == "繁體中文"
+# 語言選擇
+language = st.selectbox("語言 / Language", ["繁體中文", "English"])
 
-# ======================
-# 📄 3. 多語言文字定義
-# ======================
+# 多語言文字字典
 text = {
-    "title": "公路車尺寸建議工具" if is_tw else "Road Bike Fit Recommendation Tool",
-    "instruction": "請輸入下列身體尺寸資料：" if is_tw else "Please enter the following body measurements:",
-    "gender": "性別" if is_tw else "Gender",
-    "male": "男性" if is_tw else "Male",
-    "female": "女性" if is_tw else "Female",
-    "inseam": "跨下長（cm）" if is_tw else "Inseam (cm)",
-    "height": "身高（cm）" if is_tw else "Height (cm)",
-    "shoulder": "肩寬（cm）" if is_tw else "Shoulder Width (cm)",
-    "ischial": "坐骨寬（cm）" if is_tw else "Ischial Width (cm)",
-    "stack": "車架 Stack (mm)",
-    "reach": "車架 Reach (mm)",
-    "calculate": "計算建議" if is_tw else "Get Recommendation",
-    "result": "📄 建議結果" if is_tw else "📄 Recommended Fit",
-    "saddle_height": "建議座墊高度",
-    "stack_result": "建議 Stack",
-    "reach_result": "建議 Reach",
-    "spacer": "與車架 Stack 差值",
-    "stem": "與車架 Reach 差值",
-    "handlebar": "建議把手寬度",
-    "saddle_width": "建議坐墊寬度",
-    "crank": "建議曲柄長度",
-    "donate": "☕️ 歡迎贊助我一杯咖啡：" if is_tw else "☕️ Buy me a coffee:",
-}
+    "繁體中文": {
+        "title": "🚴‍♂️ 公路車尺寸建議工具",
+        "input_prompt": "請輸入下列身體尺寸資料：",
+        "inseam": "跨下長（cm）　（坐骨結節 ➝ 腳跟/地面）",
+        "height": "身高（cm）　（頭頂 ➝ 地面）",
+        "shoulder": "肩寬（cm）　（左右肩峰）",
+        "ischial": "坐骨寬（cm）　（左右坐骨結節）",
+        "forearm": "前臂長（cm）　（肘骨外上髁 ➝ 橈骨莖突）",
+        "arm": "手臂長（cm）　（肩峰 ➝ 肘骨外上髁）",
+        "trunk": "軀幹長（cm）　（胸骨凹口 ➝ 髖脊）",
+        "thigh": "大腿長（cm）　（大轉子 ➝ 股骨外髁）",
+        "lower_leg": "小腿長（cm）　（股骨外髁 ➝ 脛骨外踝）",
+        "sternal": "胸骨凹口高（cm）　（胸骨凹口 ➝ 地面）",
+        "gender": "性別",
+        "male": "男性",
+        "female": "女性",
+        "bike_stack": "車架 Stack (mm)",
+        "bike_reach": "車架 Reach (mm)",
+        "calculate": "計算建議",
+        "result": "📄 建議結果",
+        "saddle_height": "📐 建議座墊高度：約 {:.1f} cm",
+        "stack_recommend": "📏 建議 Stack：約 {:.1f} mm",
+        "reach_recommend": "📏 建議 Reach：約 {:.1f} mm",
+        "stack_diff": "📐 與車架 Stack 差值：{:.1f} mm（{} 建議使用{}公分墊圈）",
+        "reach_diff": "📏 與車架 Reach 差值：{:.1f} mm（{} 建議使用龍頭長度：約 {} cm）",
+        "handlebar_width": "🤲 建議把手寬度：約 {:.0f} ± 2 cm",
+        "saddle_width": "🪑 建議坐墊寬度：約 {:.1f}–{:.1f} cm",
+        "crank_length": "🚴 建議曲柄長度：約 {} mm（依 {} 建議）",
+        "sponsor": "☕ 如果這個工具對你有幫助，歡迎[贊助我一杯咖啡](https://paypal.me/leopardbikeadvice)"
+    },
+    "English": {
+        "title": "🚴 Road Bike Fit Recommendation Tool",
+        # 可依需要補英文
+    }
+}[language]
 
-# ======================
-# 🧮 4. 使用者輸入
-# ======================
 st.title(text["title"])
-st.markdown(f"### {text['instruction']}")
+st.markdown(text["input_prompt"])
 
+# 輸入欄位
+inseam = st.number_input(text["inseam"], min_value=0.0, value=0.0)
+height = st.number_input(text["height"], min_value=0.0, value=0.0)
+shoulder = st.number_input(text["shoulder"], min_value=0.0, value=0.0)
+ischial = st.number_input(text["ischial"], min_value=0.0, value=0.0)
+forearm = st.number_input(text["forearm"], min_value=0.0, value=0.0)
+arm = st.number_input(text["arm"], min_value=0.0, value=0.0)
+trunk = st.number_input(text["trunk"], min_value=0.0, value=0.0)
+thigh = st.number_input(text["thigh"], min_value=0.0, value=0.0)
+lower_leg = st.number_input(text["lower_leg"], min_value=0.0, value=0.0)
+sternal = st.number_input(text["sternal"], min_value=0.0, value=0.0)
 gender = st.selectbox(text["gender"], [text["male"], text["female"]])
+bike_stack = st.number_input(text["bike_stack"], min_value=0.0, value=0.0)
+bike_reach = st.number_input(text["bike_reach"], min_value=0.0, value=0.0)
 
-col1, col2 = st.columns(2)
-with col1:
-    inseam = st.number_input(text["inseam"], min_value=50.0, max_value=120.0, step=0.5)
-    shoulder = st.number_input(text["shoulder"], min_value=30.0, max_value=60.0, step=0.5)
-with col2:
-    height = st.number_input(text["height"], min_value=140.0, max_value=200.0, step=0.5)
-    ischial = st.number_input(text["ischial"], min_value=8.0, max_value=20.0, step=0.5)
-
-st.markdown("---")
-st.markdown("📦 **預計購買的車架幾何（Stack / Reach）**")
-col3, col4 = st.columns(2)
-with col3:
-    input_stack = st.number_input(text["stack"], min_value=400.0, max_value=700.0, step=1.0)
-with col4:
-    input_reach = st.number_input(text["reach"], min_value=300.0, max_value=500.0, step=1.0)
-
+# 計算邏輯（簡化示例）
 if st.button(text["calculate"]):
-    st.markdown(f"## {text['result']}")
+    saddle_height = inseam * 0.883
+    recommend_stack = height * 0.32
+    recommend_reach = trunk * 2.5  # 修正為新係數
+    diff_stack = recommend_stack - bike_stack
+    diff_reach = recommend_reach - bike_reach
+    spacer_cm = 0.5 if abs(diff_stack) <= 5 else 1.0 if abs(diff_stack) <= 15 else "需更換車架"
+    
+    # 龍頭建議
+    stem_length = round(abs(diff_reach) / 10)
+    stem_text = f"{stem_length}" if 7 <= stem_length <= 12 else "更換車架尺寸"
 
-    # 建議值計算
-    saddle_height = round(inseam * 0.883, 1)
-    stack = round(height * 0.32, 1)
-    reach = round((height + inseam) / 2.5, 1)
-
-    spacer_diff = round(stack - input_stack, 1)
-    reach_diff = round(input_reach - reach, 1)
-
-    # 龍頭長度建議（只在合理範圍）
-    stem_cm = None
-    if abs(reach_diff) <= 40:
-        stem_cm = round(reach_diff / 10)
-
-    # 曲柄長度建議
+    # 曲柄建議邏輯
     if gender == text["male"]:
-        if inseam >= 88: crank = "175 mm"
-        elif inseam >= 83: crank = "172.5 mm"
-        elif inseam >= 78: crank = "170 mm"
-        elif inseam >= 73: crank = "165 mm"
-        else: crank = "160 mm"
+        if inseam >= 90:
+            crank = 175
+        elif inseam >= 85:
+            crank = 172.5
+        elif inseam >= 80:
+            crank = 170
+        elif inseam >= 75:
+            crank = 165
+        else:
+            crank = 160
     else:
-        if inseam >= 85: crank = "172.5 mm"
-        elif inseam >= 80: crank = "170 mm"
-        elif inseam >= 75: crank = "165 mm"
-        else: crank = "160 mm"
+        if inseam >= 85:
+            crank = 172.5
+        elif inseam >= 80:
+            crank = 170
+        elif inseam >= 75:
+            crank = 165
+        else:
+            crank = 160
 
-    # 顯示建議結果
-    st.write(f"📐 {text['saddle_height']}：{saddle_height} cm")
-    st.write(f"📏 {text['stack_result']}：{stack} mm　({text['spacer']}：{stack - input_stack:+.1f} mm{' ✅ 相符建議使用1公分墊圈' if abs(spacer_diff) <= 10 else ' ❌ 差距過大建議更換車架'})")
-    if stem_cm:
-        st.write(f"📏 {text['reach_result']}：{reach} mm　({text['stem']}：{reach_diff:+.1f} mm，建議龍頭長度：約 {stem_cm} cm)")
-    else:
-        st.write(f"📏 {text['reach_result']}：{reach} mm　({text['stem']}：{reach_diff:+.1f} mm ❌ 差距過大建議更換車架）")
-
-    st.write(f"👐 {text['handlebar']}：{shoulder} ± 2 cm")
-    st.write(f"🍑 {text['saddle_width']}：{ischial + 2}–{ischial + 4} cm")
-    st.write(f"🔧 {text['crank']}：{crank}")
-
-    st.markdown(f"---
-{text['donate']} [paypal.me/leopardbikeadvice](https://paypal.me/leopardbikeadvice)")
+    st.markdown("---")
+    st.subheader(text["result"])
+    st.markdown(text["saddle_height"].format(saddle_height))
+    st.markdown(text["stack_recommend"].format(recommend_stack))
+    st.markdown(text["reach_recommend"].format(recommend_reach))
+    st.markdown(text["stack_diff"].format(diff_stack, "✅ 相符", spacer_cm))
+    st.markdown(text["reach_diff"].format(diff_reach, "✅ 相符", stem_text))
+    st.markdown(text["handlebar_width"].format(shoulder))
+    st.markdown(text["saddle_width"].format(ischial + 1, ischial + 2))
+    st.markdown(text["crank_length"].format(crank, gender))
+    st.markdown("---")
+    st.markdown(text["sponsor"])
