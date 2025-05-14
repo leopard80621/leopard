@@ -3,7 +3,7 @@ import streamlit as st
 # 頁面設定
 st.set_page_config(page_title="🚴‍♂️ Road Bike Fit Tool", layout="centered")
 
-# 語言內容
+# 中英語言內容（含骨標記說明）
 language_text = {
     "繁體中文": {
         "title": "公路車尺寸建議工具",
@@ -81,7 +81,7 @@ language_text = {
     }
 }
 
-# 工具：安全轉換 float
+# 工具：安全轉 float
 def parse_float(val): 
     try: return float(val)
     except: return None
@@ -91,24 +91,23 @@ language = st.selectbox("語言 / Language", list(language_text.keys()))
 text = language_text[language]
 fields = text["fields"]
 
-# 顯示標題
 st.markdown(f"<h1 style='text-align: center;'>🚴‍♂️ {text['title']}</h1>", unsafe_allow_html=True)
 st.markdown(text["input_prompt"])
 
 # 性別
 gender = st.radio(text["gender"], text["gender_options"], horizontal=True)
 
-# 使用者輸入資料
+# 輸入欄位（帶有 ? 說明）
 user_inputs = {}
 for key, (label, tip) in fields.items():
     user_inputs[key] = parse_float(st.text_input(f"{label} ❓", help=tip))
 
-# 車架 stack / reach
+# 車架幾何輸入
 st.markdown(f"### {text['frame_stack_label']}")
 input_stack = parse_float(st.text_input(text["frame_stack"]))
 input_reach = parse_float(st.text_input(text["frame_reach"]))
 
-# 計算
+# 計算建議
 if st.button(text["submit"]):
     inputs = list(user_inputs.values()) + [input_stack, input_reach]
     if any(v is None for v in inputs):
@@ -116,6 +115,7 @@ if st.button(text["submit"]):
     else:
         st.markdown(f"### {text['result_title']}")
 
+        # 抓數據
         inseam = user_inputs["inseam"]
         trunk = user_inputs["trunk"]
         arm = user_inputs["arm"]
@@ -126,11 +126,11 @@ if st.button(text["submit"]):
         shoulder = user_inputs["shoulder"]
         sit_bone = user_inputs["sitbone"]
 
-        # 座墊高度
+        # 建議座墊高
         saddle_height = round(inseam * 0.883, 1)
         st.markdown(f"📏 {text['saddle_height']} {saddle_height} {text['unit_cm']}")
 
-        # Stack 建議
+        # Stack
         stack = round((sacrum + leg) * 2.8, 1)
         stack_diff = round(stack - input_stack, 1)
         if abs(stack_diff) <= 30:
@@ -139,24 +139,27 @@ if st.button(text["submit"]):
         else:
             st.markdown(f"📐 {text['stack_suggest']} {stack} {text['unit_mm']}　{text['stack_diff']} {stack_diff} mm（{text['stack_exceed']}）")
 
-        # Reach 建議：trunk * 6.0（以 mm 為單位）
-        reach = round(trunk * 6.0, 1)
-reach_diff = round(reach - input_reach, 1)
-stem_length = round(abs(reach_diff) / 10)
+        # Reach（重點修正）
+        reach = round(trunk * 6.0 * 10, 1)  # trunk 乘 6.0 再轉換為 mm
+        reach_diff = round(reach - input_reach, 1)
+        stem_length = round(abs(reach_diff) / 10)
 
-if abs(reach_diff) <= 30:
-    if 7 <= stem_length <= 12:
-        st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(stem_length=stem_length)}）")
-    else:
-        direction = "小" if reach_diff < 0 else "大" if language == "繁體中文" else "smaller" if reach_diff < 0 else "larger"
-        st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
-else:
-    direction = "小" if reach_diff < 0 else "大" if language == "繁體中文" else "smaller" if reach_diff < 0 else "larger"
-    st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
+        if abs(reach_diff) <= 30:
+            if 7 <= stem_length <= 12:
+                st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(stem_length=stem_length)}）")
+            else:
+                direction = "小" if reach_diff < 0 else "大" if language == "繁體中文" else "smaller" if reach_diff < 0 else "larger"
+                st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
+        else:
+            direction = "小" if reach_diff < 0 else "大" if language == "繁體中文" else "smaller" if reach_diff < 0 else "larger"
+            st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
 
+        # 把手寬
         st.markdown(f"🤝 {text['shoulder_suggest']} {round(shoulder)} ±2 {text['unit_cm']}")
-        sit_pad = 2 if gender in ["男性", "Male"] else 3
-        sit_width = round(sit_bone + sit_pad, 1)
+
+        # 坐墊寬度
+        pad = 2.0 if gender in ["男性", "Male"] else 3.0
+        sit_width = round(sit_bone + pad, 1)
         st.markdown(f"🍑 {text['sitbone_suggest']} {sit_width} {text['unit_cm']}")
 
         # 曲柄長度
