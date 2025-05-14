@@ -8,8 +8,11 @@
     "fields": {
       "inseam": ["跨下長（cm）", "腳跟到會陰的垂直距離"],
       "trunk": ["軀幹長（cm）", "C7到髂脊上緣的距離"],
+      "forearm": ["前臂長（cm）", "手肘外上髁到橈骨莖突"],
+      "arm": ["手臂長（cm）", "肩峰到橈骨莖突"],
+      "thigh": ["大腿長（cm）", "髂前上棘到髕骨上緣"],
       "leg": ["小腿長（cm）", "髕骨下緣到內踝"],
-      "sacrum": ["胸骨凹口高（cm）", "腳跟到胸骨凹口的高度"],
+      "sacrum": ["胸骨凹口高（cm）", "腳跟到胸骨凹口"],
       "height": ["身高（cm）", "身體總長"],
       "shoulder": ["肩寬（cm）", "左右肩峰之間的距離"],
       "sitbone": ["坐骨寬（cm）", "坐骨之間最寬的距離"]
@@ -43,6 +46,9 @@
     "fields": {
       "inseam": ["Inseam (cm)", "Vertical distance from heel to crotch"],
       "trunk": ["Trunk Length (cm)", "Distance from C7 to iliac crest"],
+      "forearm": ["Forearm Length (cm)", "From lateral epicondyle to radial styloid"],
+      "arm": ["Arm Length (cm)", "From acromion to radial styloid"],
+      "thigh": ["Thigh Length (cm)", "From ASIS to top of patella"],
       "leg": ["Lower Leg Length (cm)", "From bottom of patella to medial malleolus"],
       "sacrum": ["Sternal Notch Height (cm)", "From heel to sternal notch"],
       "height": ["Height (cm)", "Total body height"],
