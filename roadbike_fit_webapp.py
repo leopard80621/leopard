@@ -16,7 +16,7 @@ T = {
     "height": "身高（cm）" if zh else "Height (cm)",
     "shoulder": "肩寬（cm）" if zh else "Shoulder Width (cm)",
     "ischial": "坐骨寬（cm）" if zh else "Ischial Width (cm)",
-    "trunk": "臀幹長（cm）" if zh else "Trunk Length (cm)",
+    "trunk": "軀幹長（cm）" if zh else "Trunk Length (cm)",
     "arm": "手臂長（cm）" if zh else "Arm Length (cm)",
     "forearm": "前臂長（cm）" if zh else "Forearm Length (cm)",
     "thigh": "大腿長（cm）" if zh else "Thigh Length (cm)",
