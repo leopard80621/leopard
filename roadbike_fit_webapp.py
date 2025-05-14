@@ -67,7 +67,7 @@ if st.button(T["calc"]):
     else:
         saddle_height = inseam * 0.883
         stack = height * 0.32 * 10
-        reach = (trunk + arm + forearm) * 2.96  # 依據 fitting 報告推導
+        reach = (trunk + arm + forearm) * 2.5  # 依據 fitting 報告推導
 
         st.subheader(T["result"])
         st.write(T["saddle"].format(saddle_height))
