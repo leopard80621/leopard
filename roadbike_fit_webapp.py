@@ -16,7 +16,7 @@ T = {
     "height": "身高（cm）" if zh else "Height (cm)",
     "shoulder": "肩寬（cm）" if zh else "Shoulder Width (cm)",
     "ischial": "坐骨寬（cm）" if zh else "Ischial Width (cm)",
-    "trunk": "軀幹長（cm）" if zh else "Trunk Length (cm)",
+    "trunk": "臀幹長（cm）" if zh else "Trunk Length (cm)",
     "arm": "手臂長（cm）" if zh else "Arm Length (cm)",
     "forearm": "前臂長（cm）" if zh else "Forearm Length (cm)",
     "thigh": "大腿長（cm）" if zh else "Thigh Length (cm)",
@@ -83,8 +83,14 @@ if st.button(T["calc"]):
             else:
                 st.write(T["delta_stack"].format(diff_stack, T["ok"]))
         if input_reach:
-            stem = round(reach - input_reach, 1)
-            st.write("🛠️ 建議使用龍頭長度：約 {:.1f} mm".format(stem))
+            reach_diff = round(reach - input_reach, 1)
+            st.write(T["delta_reach"].format(reach_diff, T["ok"] if abs(reach_diff) <= 10 else T["bad"]))
+            stem = round(reach - input_reach)
+            stem_rounded = min(max(round(stem / 10), 7), 12)
+            if stem_rounded > 13:
+                st.warning("❌ 建議龍頭長度已超過常見尺寸範圍（>130mm），請考慮換小一號車架")
+            else:
+                st.write(f"🛠️ 建議使用龍頭長度：約 {stem_rounded} cm")
             diff_reach = round(reach - input_reach, 1)
             st.write(T["delta_reach"].format(diff_reach, T["ok"] if abs(diff_reach) <= 10 else T["bad"]))
 
