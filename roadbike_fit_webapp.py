@@ -140,15 +140,19 @@ if st.button(text["submit"]):
             st.markdown(f"📐 {text['stack_suggest']} {stack} {text['unit_mm']}　{text['stack_diff']} {stack_diff} mm（{text['stack_exceed']}）")
 
         # Reach 建議：trunk * 6.0（以 mm 為單位）
-        recommended_reach = round(trunk * 6.0, 1)
-        reach_diff = round(recommended_reach - input_reach, 1)
-        stem_length = round(reach_diff / 10)
+        reach = round(trunk * 6.0, 1)
+reach_diff = round(reach - input_reach, 1)
+stem_length = round(abs(reach_diff) / 10)
 
-        if 7 <= stem_length <= 12:
-            st.markdown(f"📏 {text['reach_suggest']} {recommended_reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(stem_length=stem_length)}）")
-        else:
-            direction = "小" if reach_diff < 0 else "大" if language == "繁體中文" else "smaller" if reach_diff < 0 else "larger"
-            st.markdown(f"📏 {text['reach_suggest']} {recommended_reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
+if abs(reach_diff) <= 30:
+    if 7 <= stem_length <= 12:
+        st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(stem_length=stem_length)}）")
+    else:
+        direction = "小" if reach_diff < 0 else "大" if language == "繁體中文" else "smaller" if reach_diff < 0 else "larger"
+        st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
+else:
+    direction = "小" if reach_diff < 0 else "大" if language == "繁體中文" else "smaller" if reach_diff < 0 else "larger"
+    st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
 
         st.markdown(f"🤝 {text['shoulder_suggest']} {round(shoulder)} ±2 {text['unit_cm']}")
         sit_pad = 2 if gender in ["男性", "Male"] else 3
