@@ -1,5 +1,14 @@
 {
   "繁體中文": {
+    "gender": "性別",
+    ...
+  },
+  "English": {
+    "gender": "Gender",
+    ...
+  }
+}{
+  "繁體中文": {
     "title": "公路車尺寸建議工具",
     "input_prompt": "請輸入以下身體數據：",
     "inseam": "跨下長（cm）",
