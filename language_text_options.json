@@ -33,6 +33,7 @@
     "shorter": "更短",
     "shoulder_suggest": "建議把手寬度：{value} cm ±2 cm",
     "sitbone_suggest": "建議坐墊寬度：{value} cm",
+    "crank_suggest": "建議曲柄長度：{value} mm",
     "support": "☕ 如果這個工具對你有幫助，歡迎請我喝杯咖啡：",
     "support_link": "https://paypal.me/leopardbikeadvice",
     "unit_mm": "mm"
@@ -71,6 +72,7 @@
     "shorter": "shorter",
     "shoulder_suggest": "Recommended handlebar width: {value} cm ±2 cm",
     "sitbone_suggest": "Recommended saddle width: {value} cm",
+    "crank_suggest": "Recommended Crank Length: {value} mm",
     "support": "☕ If this tool helps you, consider buying me a coffee:",
     "support_link": "https://paypal.me/leopardbikeadvice",
     "unit_mm": "mm"
