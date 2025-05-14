@@ -1,11 +1,10 @@
 import streamlit as st
 import json
-import math
 
 # 頁面設定
 st.set_page_config(page_title="🚴‍♂️ 公路車尺寸建議工具", layout="centered")
 
-# 語言文字內容
+# 載入語言設定
 language_text = {
     "繁體中文": {
         "title": "公路車尺寸建議工具",
@@ -42,6 +41,42 @@ language_text = {
         "crank_suggest": "建議曲柄長度：",
         "unit_cm": "cm",
         "unit_mm": "mm"
+    },
+    "English": {
+        "title": "Road Bike Fit Recommendation Tool",
+        "input_prompt": "Please enter the following body measurements:",
+        "gender": "Gender",
+        "gender_options": ["Male", "Female"],
+        "inseam": "Inseam (cm)",
+        "trunk": "Trunk Length (cm)",
+        "forearm": "Forearm Length (cm)",
+        "arm": "Arm Length (cm)",
+        "thigh": "Thigh Length (cm)",
+        "leg": "Lower Leg Length (cm)",
+        "sacrum": "Sternal Notch Height (cm)",
+        "height": "Height (cm)",
+        "shoulder_width": "Shoulder Width (cm)",
+        "sit_bone_width": "Ischial Width (cm)",
+        "frame_stack_label": "📦 Target Frame Geometry (Stack / Reach)",
+        "frame_stack": "Frame Stack (mm)",
+        "frame_reach": "Frame Reach (mm)",
+        "submit": "Calculate Suggestion",
+        "result_title": "📋 Recommendation Result",
+        "saddle_height": "Recommended Saddle Height:",
+        "stack_suggest": "Recommended Stack:",
+        "reach_suggest": "Recommended Reach:",
+        "stack_diff": "Stack difference from frame:",
+        "reach_diff": "Reach difference from frame:",
+        "stem_suggest": "Suggested Stem Length:",
+        "stack_comment": "✅ Matches. Recommend using {value} cm spacer",
+        "stack_exceed": "❌ Too large. Suggest changing frame",
+        "reach_fit": "✅ Matches. Recommend using {stem_length} cm stem",
+        "reach_unfit": "❌ Mismatch. Recommend switching to a {direction} frame size",
+        "shoulder_suggest": "Recommended Handlebar Width:",
+        "sitbone_suggest": "Recommended Saddle Width:",
+        "crank_suggest": "Recommended Crank Length:",
+        "unit_cm": "cm",
+        "unit_mm": "mm"
     }
 }
 
@@ -49,85 +84,64 @@ language_text = {
 language = st.selectbox("語言 / Language", list(language_text.keys()))
 text = language_text[language]
 
-# 顯示標題與說明
 st.markdown(f"<h1 style='text-align: center;'>🚴‍♂️ {text['title']}</h1>", unsafe_allow_html=True)
 st.markdown(text["input_prompt"])
 
-# 輸入資料
-gender = st.radio(text["gender"], text["gender_options"], horizontal=True)
-inseam = st.number_input(text["inseam"], min_value=50.0, max_value=100.0, step=0.1)
-trunk = st.number_input(text["trunk"], min_value=30.0, max_value=80.0, step=0.1)
-forearm = st.number_input(text["forearm"], min_value=20.0, max_value=60.0, step=0.1)
-arm = st.number_input(text["arm"], min_value=30.0, max_value=80.0, step=0.1)
-thigh = st.number_input(text["thigh"], min_value=30.0, max_value=80.0, step=0.1)
-leg = st.number_input(text["leg"], min_value=30.0, max_value=70.0, step=0.1)
-sacrum = st.number_input(text["sacrum"], min_value=100.0, max_value=180.0, step=0.1)
-height = st.number_input(text["height"], min_value=140.0, max_value=200.0, step=0.1)
-shoulder = st.number_input(text["shoulder_width"], min_value=30.0, max_value=60.0, step=0.1)
-sit_bone = st.number_input(text["sit_bone_width"], min_value=7.0, max_value=20.0, step=0.1)
+# 工具：轉為 float，容錯空白輸入
+def parse_float(val):
+    try:
+        return float(val)
+    except:
+        return None
 
-st.markdown(f"### {text['frame_stack_label']}")
-input_stack = st.number_input(text["frame_stack"], min_value=400.0, max_value=650.0, step=1.0)
-input_reach = st.number_input(text["frame_reach"], min_value=300.0, max_value=450.0, step=1.0)
+gender = st.radio(text["gender"], text["gender_options"], horizontal=True)
+inseam = parse_float(st.text_input(text["inseam"]))
+trunk = parse_float(st.text_input(text["trunk"]))
+forearm = parse_float(st.text_input(text["forearm"]))
+arm = parse_float(st.text_input(text["arm"]))
+thigh = parse_float(st.text_input(text["thigh"]))
+leg = parse_float(st.text_input(text["leg"]))
+sacrum = parse_float(st.text_input(text["sacrum"]))
+height = parse_float(st.text_input(text["height"]))
+shoulder = parse_float(st.text_input(text["shoulder_width"]))
+sit_bone = parse_float(st.text_input(text["sit_bone_width"]))
+input_stack = parse_float(st.text_input(text["frame_stack"]))
+input_reach = parse_float(st.text_input(text["frame_reach"]))
 
 if st.button(text["submit"]):
-    st.markdown(f"### {text['result_title']}")
-
-    # 座墊高度估算：Inseam * 0.883（經典公式）
-    saddle_height = round(inseam * 0.883, 1)
-    st.markdown(f"📏 {text['saddle_height']} {saddle_height} {text['unit_cm']}")
-
-    # Stack 建議：使用 sacrum 高度與身高比例簡化推估
-    stack = round(sacrum * 0.4 + leg * 1.3, 1)
-    stack_diff = round(stack - input_stack, 1)
-
-    # 根據差值給建議：範圍 +/-15 mm 內視為合理，搭配墊圈調整
-    if abs(stack_diff) <= 30:
-        spacer_cm = 0.5 * round(abs(stack_diff) / 5 + 1)
-        st.markdown(f"📐 {text['stack_suggest']} {stack} {text['unit_mm']}　{text['stack_diff']} {stack_diff} mm（{text['stack_comment'].format(value=spacer_cm)}）")
+    inputs = [inseam, trunk, arm, thigh, leg, sacrum, height, shoulder, sit_bone, input_stack, input_reach]
+    if any(v is None for v in inputs):
+        st.warning("請完整填寫所有欄位！")
     else:
-        st.markdown(f"📐 {text['stack_suggest']} {stack} {text['unit_mm']}　{text['stack_diff']} {stack_diff} mm（{text['stack_exceed']}）")
+        st.markdown(f"### {text['result_title']}")
 
-    # Reach 建議算法（修正後 2.5 倍軀幹長）
-    reach = round(trunk * 2.5, 1)
-    reach_diff = round(input_reach - reach, 1)
+        saddle_height = round(inseam * 0.883, 1)
+        st.markdown(f"📏 {text['saddle_height']} {saddle_height} {text['unit_cm']}")
 
-    # 判斷龍頭長度（標準長度 7~12 cm），每 10 mm 差距對應 1 cm 龍頭
-    stem_cm = round(reach_diff / 10)
-    if 7 <= stem_cm <= 12:
-        st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(stem_length=stem_cm)}）")
-    else:
-        direction = "小" if reach_diff < 0 else "大"
-        st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
-
-    # 建議把手寬度：依肩寬取整數（四捨五入）
-    st.markdown(f"🤝 {text['shoulder_suggest']} {round(shoulder)} ±2 {text['unit_cm']}")
-
-    # 建議坐墊寬度（依性別取 buffer）
-    pad = 2.0 if gender == "男性" else 3.0
-    sit_width = round(sit_bone + pad, 1)
-    st.markdown(f"🍑 {text['sitbone_suggest']} {sit_width} {text['unit_cm']}")
-
-    # 建議曲柄長度（依身高與性別調整）
-    if gender == "男性":
-        if height >= 185:
-            crank = 175
-        elif height >= 175:
-            crank = 172.5
-        elif height >= 165:
-            crank = 170
-        elif height >= 155:
-            crank = 165
+        stack = round(sacrum * 0.4 + leg * 1.3, 1)
+        stack_diff = round(stack - input_stack, 1)
+        if abs(stack_diff) <= 30:
+            spacer_cm = 0.5 * round(abs(stack_diff) / 5 + 1)
+            st.markdown(f"📐 {text['stack_suggest']} {stack} {text['unit_mm']}　{text['stack_diff']} {stack_diff} mm（{text['stack_comment'].format(value=spacer_cm)}）")
         else:
-            crank = 160
-    else:
-        if height >= 175:
-            crank = 172.5
-        elif height >= 165:
-            crank = 170
-        elif height >= 155:
-            crank = 165
-        else:
-            crank = 160
+            st.markdown(f"📐 {text['stack_suggest']} {stack} {text['unit_mm']}　{text['stack_diff']} {stack_diff} mm（{text['stack_exceed']}）")
 
-    st.markdown(f"🦵 {text['crank_suggest']} {crank} mm")
+        reach = round(trunk * 2.5, 1)
+        reach_diff = round(input_reach - reach, 1)
+        stem_cm = round(reach_diff / 10)
+        if 7 <= stem_cm <= 12:
+            st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(stem_length=stem_cm)}）")
+        else:
+            direction = "小" if reach_diff < 0 else "大"
+            st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
+
+        st.markdown(f"🤝 {text['shoulder_suggest']} {round(shoulder)} ±2 {text['unit_cm']}")
+        pad = 2.0 if gender == "男性" or gender == "Male" else 3.0
+        sit_width = round(sit_bone + pad, 1)
+        st.markdown(f"🍑 {text['sitbone_suggest']} {sit_width} {text['unit_cm']}")
+
+        if gender in ["男性", "Male"]:
+            crank = 175 if height >= 185 else 172.5 if height >= 175 else 170 if height >= 165 else 165 if height >= 155 else 160
+        else:
+            crank = 172.5 if height >= 175 else 170 if height >= 165 else 165 if height >= 155 else 160
+        st.markdown(f"🦵 {text['crank_suggest']} {crank} mm")
