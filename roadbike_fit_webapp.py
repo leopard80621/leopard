@@ -61,14 +61,7 @@ if st.button(text["submit"]):
         # Reach 計算
         reach = round(trunk * 6.0, 1)
         reach_diff = round(reach - input_reach, 1)
-        required_stem = round(reach - input_reach)
-        stem_diff = required_stem - default_stem
-
-        if abs(stem_diff) <= 20:
-            st.markdown(f"📏 {text['reach_suggest']} {reach} mm　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(required=required_stem, default=default_stem, diff=stem_diff)}）")
-        else:
-            direction = text["longer"] if stem_diff > 0 else text["shorter"]
-            st.markdown(f"📏 {text['reach_suggest']} {reach} mm　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(required=required_stem, default=default_stem, diff=stem_diff, direction=direction)}）")
+        st.markdown(f"📏 {text['reach_suggest']} {reach} mm　{text['reach_diff']} {reach_diff} mm（預設龍頭長度為 {default_stem} mm）")
 
         # 額外建議：把手與坐墊寬度
         shoulder = user_inputs.get("shoulder")
