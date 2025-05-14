@@ -31,11 +31,19 @@ default_stem = default_stem_dict[frame_size]
 
 # ---------- 身體資料輸入 ----------
 user_inputs = {}
-for key, (label, tip) in fields.items():
-    user_inputs[key] = parse_float(st.text_input(f"{label} ❓", help=tip))
+left_col, right_col = st.columns(2)
+field_items = list(fields.items())
+for i, (key, (label, tip)) in enumerate(field_items):
+    col = left_col if i % 2 == 0 else right_col
+    with col:
+        user_inputs[key] = parse_float(st.text_input(f"{label} ❓", help=tip))
 
-input_stack = parse_float(st.text_input(text["stack"]))
-input_reach = parse_float(st.text_input(text["reach"]))
+st.markdown(f"### {text['frame_size_label']}")
+col1, col2 = st.columns(2)
+with col1:
+    input_stack = parse_float(st.text_input(text["stack"]))
+with col2:
+    input_reach = parse_float(st.text_input(text["reach"]))
 
 # ---------- 計算建議 ----------
 if st.button(text["submit"]):
