@@ -83,19 +83,15 @@ if st.button(T["calc"]):
             else:
                 st.write(T["delta_stack"].format(diff_stack, T["ok"]))
         if input_reach:
-            if input_reach:
-            if input_reach:
             reach_diff = round(reach - input_reach, 1)
             stem = round(reach - input_reach)
             stem_rounded = round(stem / 10)
             if 7 <= stem_rounded <= 12:
                 st.write(f"與車架 Reach 差值：{reach_diff} mm（建議使用 {stem_rounded} 公分龍頭）")
             elif stem_rounded < 7:
-                st.warning(f"與車架 Reach 差值：{reach_diff} mm（❌ 龍頭長度不足以補償，建議更換更大尺寸車架）")
+                st.warning(f"與車架 Reach 差值：{reach_diff} mm（❌ 龍頭長度不足，建議更換更大尺寸車架）")
             else:
-                st.warning(f"與車架 Reach 差值：{reach_diff} mm（❌ 龍頭長度過長，建議更換更小尺寸車架）")
-            diff_reach = round(reach - input_reach, 1)
-            st.write(T["delta_reach"].format(diff_reach, T["ok"] if abs(diff_reach) <= 10 else T["bad"]))
+                st.warning(f"與車架 Reach 差值：{reach_diff} mm（❌ 龍頭過長，建議更換更小尺寸車架）")
 
 st.markdown("---")
 st.markdown(T["donate"])
