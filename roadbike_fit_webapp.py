@@ -1,116 +1,107 @@
+
 import streamlit as st
 
-# 🛠️ 初始設定：需在最前面
+# ⚙️ 頁面設定
 st.set_page_config(page_title="公路車尺寸建議工具", layout="centered")
 
 # 🌐 語言切換
 lang = st.selectbox("語言 / Language", ["繁體中文", "English"])
 
-# 🌐 文字包
+# 📚 多語系文字包
 text = {
     "繁體中文": {
         "title": "🚴‍♂️ 公路車尺寸建議工具",
         "instruction": "請輸入下列身體尺寸資料：",
-        "inseam": "跨下長（cm）　（坐骨結節 ➜ 腳跟/地面）",
-        "height": "身高（cm）　（頭頂 ➜ 地面）",
-        "shoulder": "肩寬（cm）　（左右肩峰）",
-        "ischial": "坐骨寬（cm）　（左右坐骨結節）",
-        "trunk": "臀幹長（cm）　（胸骨凹口 ➜ 髖脊）",
-        "arm": "手臂長（cm）　（肩峰 ➜ 肘骨外上髁）",
-        "forearm": "前臂長（cm）　（肘骨外上髁 ➜ 橈骨莖突）",
-        "thigh": "大腿長（cm）　（大轉子 ➜ 股骨外髁）",
-        "lowerleg": "小腿長（cm）　（股骨外髁 ➜ 脛骨外踝）",
-        "sternal": "胸骨凹口高（cm）　（胸骨凹口 ➜ 地面）",
-        "section_purchase": "📦 預計購買的車架幾何（Stack / Reach）",
-        "stack_input": "車架 Stack (mm)",
-        "reach_input": "車架 Reach (mm)",
-        "stem_length": "龍頭長度 (mm)",
+        "inseam": "跨下長（cm） ？",
+        "height": "身高（cm） ？",
+        "shoulder": "肩寬（cm） ？",
+        "ischial": "坐骨寬（cm） ？",
+        "trunk": "臀幹長（cm） ？",
+        "arm": "手臂長（cm） ？",
+        "forearm": "前臂長（cm） ？",
+        "thigh": "大腿長（cm） ？",
+        "lowerleg": "小腿長（cm） ？",
+        "sternal": "胸骨凹口高（cm） ？",
+        "frame_stack": "車架 Stack（mm）",
+        "frame_reach": "車架 Reach（mm）",
         "calculate": "計算建議",
         "result": "🧾 建議結果",
-        "saddle_height": "建議座墊高度：",
-        "stack": "建議 Stack：",
-        "reach": "建議 Reach：",
-        "delta_stack": "與車架差值：",
-        "delta_reach": "與車架差值：",
-        "spacer": "（建議加墊圈：{:.1f} cm）",
-        "ok": "✅ 相符",
-        "ng": "❌ 有差距",
-        "bar": "｜",
-        "handlebar": "建議把手寬度：",
-        "saddle_width": "建議坐墊寬度：",
-        "donate": "☕️ 想支持這個工具？歡迎[贊助我一杯咖啡](https://paypal.me/leopardbikeadvice)",
+        "saddle_height": "建議座墊高度：約 {:.1f} cm",
+        "stack": "建議 Stack：約 {:.1f} mm",
+        "reach": "建議 Reach：約 {:.1f} mm",
+        "stem_suggestion": "建議龍頭長度：約 {:.1f} mm（依據龍頭補償距離推算）",
+        "handlebar": "建議把手寬度：約 {}–{} cm",
+        "saddle_width": "建議坐墊寬度：約 {:.1f}–{:.1f} cm",
+        "donate": "☕️ 想支持這個工具？歡迎[贊助我一杯咖啡](https://paypal.me/leopardbikeadvice)"
     },
     "English": {
         "title": "🚴‍♂️ Road Bike Fit Recommendation Tool",
         "instruction": "Please enter the following body measurements:",
-        "inseam": "Inseam (cm)　(Sit bone ➜ Heel/ground)",
-        "height": "Height (cm)　(Top of head ➜ Ground)",
-        "shoulder": "Shoulder width (cm)　(Left ➜ Right AC joint)",
-        "ischial": "Ischial width (cm)　(Left ➜ Right sit bones)",
-        "trunk": "Trunk length (cm)　(Sternal notch ➜ Iliac crest)",
-        "arm": "Arm length (cm)　(Shoulder ➜ Lateral epicondyle)",
-        "forearm": "Forearm length (cm)　(Epicondyle ➜ Styloid)",
-        "thigh": "Thigh length (cm)　(Greater trochanter ➜ Femoral condyle)",
-        "lowerleg": "Lower leg (cm)　(Condyle ➜ Malleolus)",
-        "sternal": "Sternal height (cm)　(Sternal notch ➜ Ground)",
-        "section_purchase": "📦 Geometry of Bike You Plan to Purchase (Stack / Reach)",
-        "stack_input": "Frame Stack (mm)",
-        "reach_input": "Frame Reach (mm)",
-        "stem_length": "Stem length (mm)",
+        "inseam": "Inseam (cm) ？",
+        "height": "Height (cm) ？",
+        "shoulder": "Shoulder Width (cm) ？",
+        "ischial": "Ischial Width (cm) ？",
+        "trunk": "Trunk Length (cm) ？",
+        "arm": "Arm Length (cm) ？",
+        "forearm": "Forearm Length (cm) ？",
+        "thigh": "Thigh Length (cm) ？",
+        "lowerleg": "Lower Leg Length (cm) ？",
+        "sternal": "Sternal Notch Height (cm) ？",
+        "frame_stack": "Frame Stack (mm)",
+        "frame_reach": "Frame Reach (mm)",
         "calculate": "Get Recommendation",
         "result": "🧾 Fit Result",
-        "saddle_height": "Recommended Saddle Height:",
-        "stack": "Recommended Stack:",
-        "reach": "Recommended Reach:",
-        "delta_stack": "Difference from Frame:",
-        "delta_reach": "Difference from Frame:",
-        "spacer": "(Add spacer: {:.1f} cm)",
-        "ok": "✅ Matched",
-        "ng": "❌ Mismatch",
-        "bar": "｜",
-        "handlebar": "Recommended Handlebar Width:",
-        "saddle_width": "Recommended Saddle Width:",
-        "donate": "☕️ Like this tool? [Buy me a coffee](https://paypal.me/leopardbikeadvice)",
+        "saddle_height": "Recommended Saddle Height: {:.1f} cm",
+        "stack": "Recommended Stack: {:.1f} mm",
+        "reach": "Recommended Reach: {:.1f} mm",
+        "stem_suggestion": "Suggested Stem Length: {:.1f} mm (based on reach delta)",
+        "handlebar": "Recommended Handlebar Width: {}–{} cm",
+        "saddle_width": "Recommended Saddle Width: {:.1f}–{:.1f} cm",
+        "donate": "☕️ Want to support this tool? [Buy me a coffee](https://paypal.me/leopardbikeadvice)"
     }
-}[lang]
+}
 
-st.title(text["title"])
-st.markdown(text["instruction"])
+st.title(text[lang]["title"])
+st.markdown(text[lang]["instruction"])
 
-# ✏️ 基本量測欄位
-inseam = st.number_input(text["inseam"], 50.0, 100.0, 80.0)
-height = st.number_input(text["height"], 140.0, 200.0, 175.0)
-shoulder = st.number_input(text["shoulder"], 30.0, 60.0, 42.0)
-ischial = st.number_input(text["ischial"], 8.0, 16.0, 13.0)
-trunk = st.number_input(text["trunk"], 50.0, 80.0, 64.0)
-arm = st.number_input(text["arm"], 50.0, 80.0, 66.0)
-forearm = st.number_input(text["forearm"], 25.0, 40.0, 33.5)
-thigh = st.number_input(text["thigh"], 50.0, 70.0, 62.0)
-lower_leg = st.number_input(text["lowerleg"], 40.0, 65.0, 55.0)
-sternal = st.number_input(text["sternal"], 120.0, 160.0, 145.0)
+# ✍️ 使用者輸入
+cols = st.columns(2)
+with cols[0]:
+    inseam = st.number_input(text[lang]["inseam"], 60.0, 100.0, step=0.1)
+    height = st.number_input(text[lang]["height"], 140.0, 200.0, step=0.1)
+    shoulder = st.number_input(text[lang]["shoulder"], 30.0, 50.0, step=0.1)
+    ischial = st.number_input(text[lang]["ischial"], 8.0, 16.0, step=0.1)
+    trunk = st.number_input(text[lang]["trunk"], 50.0, 70.0, step=0.1)
+with cols[1]:
+    arm = st.number_input(text[lang]["arm"], 60.0, 80.0, step=0.1)
+    forearm = st.number_input(text[lang]["forearm"], 25.0, 45.0, step=0.1)
+    thigh = st.number_input(text[lang]["thigh"], 50.0, 70.0, step=0.1)
+    lowerleg = st.number_input(text[lang]["lowerleg"], 40.0, 65.0, step=0.1)
+    sternal = st.number_input(text[lang]["sternal"], 120.0, 170.0, step=0.1)
 
-# 📦 預計購買資訊
+st.markdown("### 📦 " + text[lang]["frame_stack"])
+frame_stack = st.number_input(text[lang]["frame_stack"], 450, 650, step=1)
+frame_reach = st.number_input(text[lang]["frame_reach"], 350, 450, step=1)
+
+# 🔢 計算邏輯
+if st.button(text[lang]["calculate"]):
+    saddle_height = inseam * 0.883
+    stack = height * 0.32
+    reach = (arm + forearm + trunk) * 10 / 3  # 三段合併比例值，較為貼合
+
+    # 預估龍頭長度建議：假設標準龍頭 100 mm
+    reach_delta = frame_reach - reach
+    suggested_stem = 100 + reach_delta
+
+    # 顯示結果
+    st.markdown("### " + text[lang]["result"])
+    st.write(text[lang]["saddle_height"].format(saddle_height))
+    st.write(text[lang]["stack"].format(stack))
+    st.write(text[lang]["reach"].format(reach))
+    st.write(text[lang]["stem_suggestion"].format(suggested_stem))
+    st.write(text[lang]["handlebar"].format(int(shoulder), int(shoulder+2)))
+    st.write(text[lang]["saddle_width"].format(ischial+0.6, ischial+2.6))
+
+# ☕️ 贊助我一杯咖啡
 st.markdown("---")
-st.subheader(text["section_purchase"])
-stack_input = st.number_input(text["stack_input"], 400, 650, 570)
-reach_input = st.number_input(text["reach_input"], 350, 450, 390)
-
-# 🧮 按鈕
-if st.button(text["calculate"]):
-    saddle_height = round(inseam * 0.883, 1)
-    rec_stack = round(height * 0.32 * 10, 1)
-    rec_reach = round((trunk + arm) * 0.26 * 10, 1)
-    delta_stack = round(stack_input - rec_stack, 1)
-    delta_reach = round(reach_input - rec_reach, 1)
-    spacer_cm = max(0, -delta_stack / 10)
-
-    st.subheader(text["result"])
-    st.write(f"📐 {text['saddle_height']} {saddle_height} cm")
-    st.write(f"📏 {text['stack']} {rec_stack} mm {text['bar']} {text['delta_stack']} {delta_stack} mm", text["ok"] if abs(delta_stack) <= 10 else text["ng"], (text["spacer"].format(spacer_cm) if delta_stack < -5 else ""))
-    st.write(f"📐 {text['reach']} {rec_reach} mm {text['bar']} {text['delta_reach']} {delta_reach} mm", text["ok"] if abs(delta_reach) <= 10 else text["ng"])
-    st.write(f"🤝 {text['handlebar']} {shoulder} ± 2 cm")
-    st.write(f"🪑 {text['saddle_width']} {ischial + 2.0:.1f}–{ischial + 2.5:.1f} cm")
-
-    # ☕ 贊助區
-    st.markdown("---")
-    st.markdown(text["donate"])
+st.markdown(text[lang]["donate"])
