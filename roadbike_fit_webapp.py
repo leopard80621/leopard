@@ -1,9 +1,9 @@
 import streamlit as st
 
 # 頁面設定
-st.set_page_config(page_title="🚴‍♂️ 公路車尺寸建議工具", layout="centered")
+st.set_page_config(page_title="🚴‍♂️ Road Bike Fit Tool", layout="centered")
 
-# 多語言字典
+# 中英語言內容（含骨標記說明）
 language_text = {
     "繁體中文": {
         "title": "公路車尺寸建議工具",
@@ -41,19 +41,55 @@ language_text = {
         "crank_suggest": "建議曲柄長度：",
         "unit_cm": "cm",
         "unit_mm": "mm"
+    },
+    "English": {
+        "title": "Road Bike Fit Recommendation Tool",
+        "input_prompt": "Please enter your body measurements:",
+        "gender": "Gender",
+        "gender_options": ["Male", "Female"],
+        "fields": {
+            "inseam": ["Inseam (cm)", "Vertical distance from heel to crotch"],
+            "trunk": ["Trunk Length (cm)", "From C7 vertebra to iliac crest"],
+            "forearm": ["Forearm Length (cm)", "From lateral epicondyle to radial styloid"],
+            "arm": ["Arm Length (cm)", "From acromion to radial styloid"],
+            "thigh": ["Thigh Length (cm)", "From ASIS to top of patella"],
+            "leg": ["Lower Leg Length (cm)", "From bottom of patella to medial malleolus"],
+            "sacrum": ["Sternal Notch Height (cm)", "From heel to sternal notch"],
+            "height": ["Height (cm)", "Total body height"],
+            "shoulder": ["Shoulder Width (cm)", "Distance between both acromions"],
+            "sitbone": ["Ischial Width (cm)", "Widest distance between sit bones"]
+        },
+        "frame_stack_label": "📦 Target Frame Geometry (Stack / Reach)",
+        "frame_stack": "Frame Stack (mm)",
+        "frame_reach": "Frame Reach (mm)",
+        "submit": "Calculate Suggestion",
+        "result_title": "📋 Recommendation Result",
+        "saddle_height": "Recommended Saddle Height:",
+        "stack_suggest": "Recommended Stack:",
+        "reach_suggest": "Recommended Reach:",
+        "stack_diff": "Stack difference from frame:",
+        "reach_diff": "Reach difference from frame:",
+        "stack_comment": "✅ Matches. Recommend using {value} cm spacer",
+        "stack_exceed": "❌ Too much difference. Suggest changing frame",
+        "reach_fit": "✅ Matches. Recommend using {stem_length} cm stem",
+        "reach_unfit": "❌ Mismatch. Consider switching to a {direction} size frame",
+        "shoulder_suggest": "Recommended Handlebar Width:",
+        "sitbone_suggest": "Recommended Saddle Width:",
+        "crank_suggest": "Recommended Crank Length:",
+        "unit_cm": "cm",
+        "unit_mm": "mm"
     }
 }
 
-# 語言選擇
+# 語言選擇與內容載入
 language = st.selectbox("語言 / Language", list(language_text.keys()))
 text = language_text[language]
 fields = text["fields"]
 
-# 顯示標題與說明
 st.markdown(f"<h1 style='text-align: center;'>🚴‍♂️ {text['title']}</h1>", unsafe_allow_html=True)
 st.markdown(text["input_prompt"])
 
-# 工具：轉為 float，容錯空白輸入
+# 工具：安全轉 float
 def parse_float(val): 
     try: return float(val)
     except: return None
@@ -61,7 +97,7 @@ def parse_float(val):
 # 性別
 gender = st.radio(text["gender"], text["gender_options"], horizontal=True)
 
-# 動態欄位（含 tooltip）
+# 輸入欄位（帶有 ? 說明）
 user_inputs = {}
 for key, (label, tip) in fields.items():
     user_inputs[key] = parse_float(st.text_input(f"{label} ❓", help=tip))
@@ -71,12 +107,14 @@ st.markdown(f"### {text['frame_stack_label']}")
 input_stack = parse_float(st.text_input(text["frame_stack"]))
 input_reach = parse_float(st.text_input(text["frame_reach"]))
 
+# 計算建議
 if st.button(text["submit"]):
     inputs = list(user_inputs.values()) + [input_stack, input_reach]
     if any(v is None for v in inputs):
-        st.warning("請完整填寫所有欄位！")
+        st.warning("請完整填寫所有欄位！" if language == "繁體中文" else "Please complete all fields!")
     else:
         st.markdown(f"### {text['result_title']}")
+
         inseam = user_inputs["inseam"]
         trunk = user_inputs["trunk"]
         arm = user_inputs["arm"]
@@ -104,7 +142,7 @@ if st.button(text["submit"]):
         if 7 <= stem_cm <= 12:
             st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(stem_length=stem_cm)}）")
         else:
-            direction = "小" if reach_diff < 0 else "大"
+            direction = "小" if reach_diff < 0 else "大" if language == "繁體中文" else "smaller" if reach_diff < 0 else "larger"
             st.markdown(f"📏 {text['reach_suggest']} {reach} {text['unit_mm']}　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(direction=direction)}）")
 
         st.markdown(f"🤝 {text['shoulder_suggest']} {round(shoulder)} ±2 {text['unit_cm']}")
