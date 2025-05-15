@@ -61,19 +61,22 @@ if st.button(text["submit"]):
         stack = round((sacrum + leg) * 2.8, 1)
         stack_diff = round(stack - input_stack, 1)
         if abs(stack_diff) <= 30:
-            spacer = 0.5 * round(abs(stack_diff) / 5 + 1)
-            st.markdown(f"📐 {text['stack_suggest']} {stack} mm　{text['stack_diff']} {stack_diff} mm（{text['stack_ok'].format(value=spacer)}）")
+            if stack_diff >= 0:
+                spacer = 0.5 * round(abs(stack_diff) / 5 + 1)
+                st.markdown(f"📐 {text['stack_suggest']} {stack} mm　{text['stack_diff']} {stack_diff} mm（{text['stack_ok'].format(value=spacer)}）")
+            else:
+                st.markdown(f"📐 {text['stack_suggest']} {stack} mm　{text['stack_diff']} {stack_diff} mm（{text['stack_ok'].format(value=0)}）")
         else:
             st.markdown(f"📐 {text['stack_suggest']} {stack} mm　{text['stack_diff']} {stack_diff} mm（{text['stack_fail']}）")
 
-        # Reach 改良後計算與推薦龍頭建議
+        # Reach 計算（預設龍頭與推薦）
         recommended_reach = round(trunk * 6.0, 1)
         reach_diff = round(recommended_reach - input_reach, 1)
         required_stem = round(default_stem + reach_diff)
         required_stem = max(70, min(130, required_stem))
         stem_deviation = abs(required_stem - default_stem)
 
-        if 70 <= required_stem <= 130 and stem_deviation <= 20:
+        if stem_deviation <= 20:
             st.markdown(
                 f"📏 {text['reach_suggest']} {recommended_reach} mm　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(required=required_stem, default=default_stem, diff=stem_deviation)}）"
             )
