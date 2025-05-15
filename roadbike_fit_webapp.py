@@ -66,12 +66,24 @@ if st.button(text["submit"]):
         else:
             st.markdown(f"📐 {text['stack_suggest']} {stack} mm　{text['stack_diff']} {stack_diff} mm（{text['stack_fail']}）")
 
-        # Reach 計算
-        reach = round(trunk * 6.0, 1)
-        reach_diff = round(reach - input_reach, 1)
-        st.markdown(f"📏 {text['reach_suggest']} {reach} mm　{text['reach_diff']} {reach_diff} mm（預設龍頭長度為 {default_stem} mm）")
+        # Reach 改良後計算與推薦龍頭建議
+        recommended_reach = round(trunk * 6.0, 1)
+        reach_diff = round(recommended_reach - input_reach, 1)
+        required_stem = round(default_stem + reach_diff)
+        required_stem = max(70, min(130, required_stem))
+        stem_deviation = abs(required_stem - default_stem)
 
-        # 額外建議：把手與坐墊寬度
+        if 70 <= required_stem <= 130 and stem_deviation <= 20:
+            st.markdown(
+                f"📏 {text['reach_suggest']} {recommended_reach} mm　{text['reach_diff']} {reach_diff} mm（{text['reach_fit'].format(required=required_stem, default=default_stem, diff=stem_deviation)}）"
+            )
+        else:
+            direction = text["longer"] if required_stem > default_stem else text["shorter"]
+            st.markdown(
+                f"📏 {text['reach_suggest']} {recommended_reach} mm　{text['reach_diff']} {reach_diff} mm（{text['reach_unfit'].format(required=required_stem, default=default_stem, direction=direction)}）"
+            )
+
+        # 額外建議
         shoulder = user_inputs.get("shoulder")
         if shoulder is not None:
             st.markdown(text["shoulder_suggest"].format(value=round(shoulder)))
@@ -81,7 +93,6 @@ if st.button(text["submit"]):
             pad = 2.0 if gender in ["男性", "Male"] else 3.0
             st.markdown(text["sitbone_suggest"].format(value=round(sitbone + pad, 1)))
 
-        # 建議曲柄長度
         height = user_inputs["height"]
         if gender in ["男性", "Male"]:
             crank = 172.5 if height >= 185 else 170 if height >= 175 else 167.5 if height >= 165 else 162.5 if height >= 155 else 157.5
