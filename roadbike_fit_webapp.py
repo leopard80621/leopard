@@ -30,7 +30,7 @@ st.markdown(
 )
 
 # ----------------------------
-# 4. Step 1：展示「所有量測欄位」＋說明 Expander（使用 text_input，預設為空）
+# 4. Step 1：展示所有量測欄位＋說明 Expander（使用 text_input，預設為空）
 # ----------------------------
 st.header(text["step1"])
 with st.expander(text["expander_help"], expanded=False):
@@ -122,9 +122,6 @@ if st.button(text["calculate_button"]):
     if missing:
         st.error("❗ 請確認以下欄位已正確填寫（數字形式）：\n- " + "、".join(missing))
     else:
-        # 若扔沒有至少 Inseam、Height、Shoulder、車架 Stack/Reach，就不繼續
-        # 連續檢查後，開始進階計算
-
         # ----------------------------------
         # 6.3 Stack（進階公式）
         # ----------------------------------
@@ -214,15 +211,36 @@ if st.button(text["calculate_button"]):
         st.info(text["shoulder_result"].format(value=round(shoulder)))
 
         # ----------------------------------
-        # 6.6 曲柄長度建議（進階公式）
+        # 6.6 曲柄長度建議（改回依身高/性別區間）
         # ----------------------------------
         st.markdown(f"#### {text['crank_title']}")
-        if thigh is not None and lower_leg is not None:
-            crank_adv = round((thigh * 0.45 + lower_leg * 0.45) * 10)
-            crank_adv = max(155, min(180, crank_adv))
-            st.info(text["crank_result"].format(value_adv=crank_adv))
+        # 原本的「進階公式」已移除，改成依身高與性別分段
+        if height is not None:
+            # 先假設 gender 也改用 text 裡的順序，這邊硬寫成繁中第一個值為「男性」
+            # 如果未加入性別選項，這段就是直接以身高判斷。
+            gender = None  # 若程式中無法取得性別，此處可置 None，僅依身高
+            # 以下使用身高分段公式：
+            if gender == text["gender_options"][0] or gender == "Male":
+                # 男性
+                if height < 165:
+                    crank = 165
+                elif height < 175:
+                    crank = 170
+                elif height < 185:
+                    crank = 172.5
+                else:
+                    crank = 175
+            else:
+                # 女性 或無性別欄位時一律用女性公式
+                if height < 165:
+                    crank = 162.5
+                elif height < 175:
+                    crank = 167.5
+                else:
+                    crank = 170
+            st.info(text["crank_result"].format(value_adv=crank))
         else:
-            st.info("▶ 若要進階曲柄計算，請同時填寫「大腿長」和「小腿長」。")
+            st.info("▶ 若要計算曲柄長度，請填寫「身高」。")
 
         # ----------------------------------
         # 6.7 健康舒適小提醒
