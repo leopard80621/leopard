@@ -71,9 +71,10 @@ with col2:
     sitbone_str   = st.text_input(text["sitbone_label"], "")
 
 # ----------------------------
-# 5. Step 2：輸入車架 Reach
+# 5. Step 2：輸入車架 Stack & Reach
 # ----------------------------
 st.header(text["step2"])
+frame_stack_str = st.text_input("車架 Stack (mm)", "")
 frame_reach_str = st.text_input(text["custom_reach_label"], "")
 
 # ----------------------------
@@ -90,7 +91,7 @@ def to_float(val_str):
 # ----------------------------
 st.header(text["step3"])
 if st.button(text["calculate_button"]):
-    # 6.1 讀取並轉型
+    # 6.1 讀取量測並轉型
     inseam    = to_float(inseam_str)
     torso     = to_float(torso_str)
     forearm   = to_float(forearm_str)
@@ -102,9 +103,10 @@ if st.button(text["calculate_button"]):
     shoulder  = to_float(shoulder_str)
     sitbone   = to_float(sitbone_str)
 
+    frame_stack = to_float(frame_stack_str)
     frame_reach = to_float(frame_reach_str)
 
-    # 檢查必要欄位：Inseam、Height、Shoulder、Frame Reach
+    # 檢查必要欄位：Inseam、Height、Shoulder、Frame Stack、Frame Reach
     missing = []
     if inseam is None:
         missing.append("跨下長")
@@ -112,6 +114,8 @@ if st.button(text["calculate_button"]):
         missing.append("身高")
     if shoulder is None:
         missing.append("肩寬")
+    if frame_stack is None:
+        missing.append("車架 Stack")
     if frame_reach is None:
         missing.append("車架 Reach")
 
@@ -119,13 +123,64 @@ if st.button(text["calculate_button"]):
         st.error("❗ 請確認以下欄位已正確填寫（數字格式）：\n- " + "、".join(missing))
     else:
         # ----------------------------
+        # 計算「建議身體 Stack」
+        # ----------------------------
+        st.markdown("---")
+        st.markdown(f"#### {text['stack_title']}")
+
+        # (A) 座管到踏板中心 (mm)
+        seat_height_mm = round(inseam * 0.883 * 10)
+
+        # (B) 胸骨到座管頂垂直差 (mm)
+        lean_angle = 18
+        if sternal is not None:
+            s_b_diff_mm = (sternal - (inseam * 0.883)) * 10
+            upper_vert_mm = round(s_b_diff_mm * math.cos(math.radians(lean_angle)))
+        else:
+            upper_vert_mm = 0
+
+        # (C) 加權 α = 0.3
+        alpha = 0.3
+        raw_stack_mm = round(seat_height_mm * alpha + upper_vert_mm * (1 - alpha))
+
+        # (D) 縮放 ×0.82
+        suggested_body_stack = round(raw_stack_mm * 0.82)
+
+        # 顯示「建議身體 Stack」
+        st.markdown(f"▶ 建議身體 Stack：{suggested_body_stack} mm")
+
+        # 比對「車架 Stack」
+        delta_stack = frame_stack - suggested_body_stack
+        spacer_needed = max(0.5, round((suggested_body_stack - frame_stack) / 10 * 2) / 2)
+        # 若需要墊圈超過 40 mm，建議換大一號
+        if suggested_body_stack - frame_stack > 40:
+            st.error(
+                f"▶ 你的車架 Stack = {frame_stack:.0f} mm，比建議身體 Stack {suggested_body_stack} mm 低 {suggested_body_stack - frame_stack} mm，"
+                f"若要到達建議需墊圈 {spacer_needed} cm，超過 4 cm，建議選擇大一號車架。"
+            )
+        else:
+            if delta_stack > 20:
+                st.success(
+                    f"▶ 你的車架 Stack = {frame_stack:.0f} mm，比建議身體 Stack {suggested_body_stack} mm 高 {delta_stack:.0f} mm，"
+                    "建議可以降低座管或降把，否則此車架偏高。"
+                )
+            elif delta_stack < -20:
+                st.success(
+                    f"▶ 你的車架 Stack = {frame_stack:.0f} mm，比建議身體 Stack {suggested_body_stack} mm 低 {abs(delta_stack):.0f} mm，"
+                    f"可使用墊圈 {spacer_needed} cm。"
+                )
+            else:
+                st.success(
+                    f"▶ 你的車架 Stack = {frame_stack:.0f} mm，與建議身體 Stack {suggested_body_stack} mm 相差 {delta_stack:.0f} mm，可接受。"
+                )
+
+        # ----------------------------
         # 計算「建議身體 Reach」
         # ----------------------------
         st.markdown("---")
         st.markdown(f"#### {text['reach_title']}")
 
         # (1) Torso 水平投影 (mm)
-        lean_angle = 18
         if torso is not None:
             torso_horiz_mm = round(torso * math.cos(math.radians(lean_angle)) * 10)
         else:
@@ -153,51 +208,44 @@ if st.button(text["calculate_button"]):
         else:
             sitbone_mm = 0
 
-        # (6) Raw Reach
+        # (6) Raw Reach = 各段投影 + 坐骨寬 - 骨盆投影
         raw_reach_mm = torso_horiz_mm + arm_horiz_mm + forearm_horiz_mm + sitbone_mm - pelvis_proj_mm
 
         # (7) 建議身體 Reach：β = 0.95
         beta = 0.95
         suggested_body_reach = round(raw_reach_mm * beta)
 
-        # 顯示建議身體 Reach
+        # 顯示「建議身體 Reach」
         st.markdown(f"▶ 建議身體 Reach：{suggested_body_reach} mm")
 
-        # ----------------------------
-        # 只比對「車架 Reach」與「建議身體 Reach」
-        # ----------------------------
+        # 比對「車架 Reach」
         tolerance = 10  # ±10 mm
+        delta_reach = frame_reach - suggested_body_reach
 
-        delta = frame_reach - suggested_body_reach
-
-        if delta > tolerance:
-            # 車架 Reach 過長
+        if delta_reach > tolerance:
             st.error(
-                f"▶ 你的車架 Reach = {frame_reach:.0f} mm，比建議身體 Reach {suggested_body_reach} mm 長 {delta} mm，"
+                f"▶ 你的車架 Reach = {frame_reach:.0f} mm，比建議身體 Reach {suggested_body_reach} mm 長 {delta_reach:.0f} mm，"
                 "建議選擇較短 Reach 的車架。"
             )
-        elif delta < -tolerance:
-            # 車架 Reach 過短
-            needed = abs(delta)
+        elif delta_reach < -tolerance:
+            needed = abs(delta_reach)
             st.success(
-                f"▶ 你的車架 Reach = {frame_reach:.0f} mm，比建議身體 Reach {suggested_body_reach} mm 短 {needed} mm，"
+                f"▶ 你的車架 Reach = {frame_reach:.0f} mm，比建議身體 Reach {suggested_body_reach} mm 短 {needed:.0f} mm，"
                 "建議選擇較長 Reach 的車架。"
             )
         else:
-            # 在 ±10 mm 內
             st.success(
-                f"▶ 你的車架 Reach = {frame_reach:.0f} mm，與建議身體 Reach {suggested_body_reach} mm 相差 {delta} mm，"
-                "可接受。"
+                f"▶ 你的車架 Reach = {frame_reach:.0f} mm，與建議身體 Reach {suggested_body_reach} mm 相差 {delta_reach:.0f} mm，可接受。"
             )
 
         # ----------------------------
-        # 6.5 把手寬度建議
+        # 把手寬度建議
         # ----------------------------
         st.markdown(f"#### {text['shoulder_result']}")
         st.info(text["shoulder_result"].format(value=round(shoulder)))
 
         # ----------------------------
-        # 6.6 曲柄長度建議（依身高分段）
+        # 曲柄長度建議（依身高分段）
         # ----------------------------
         st.markdown(f"#### {text['crank_title']}")
         if height is not None:
@@ -214,7 +262,7 @@ if st.button(text["calculate_button"]):
             st.info("▶ 若要計算曲柄長度，請填寫「身高」。")
 
         # ----------------------------
-        # 6.7 健康舒適小提醒
+        # 健康舒適小提醒
         # ----------------------------
         st.markdown("---")
         st.markdown(f"#### {text['health_title']}")
