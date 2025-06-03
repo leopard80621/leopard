@@ -92,7 +92,6 @@ stem_map = {
     "L": 100,
     "XL": 110
 }
-# 依據所選 frame_size，取得對應 stem_length
 stem_length = stem_map[frame_size]
 
 # 固定龍頭角度 -6°
@@ -102,8 +101,10 @@ st.markdown(
     f"**依照你選的車架尺寸 {frame_size}，系統建議使用 龍頭長度：{stem_length} mm，角度固定 {stem_angle}°。**"
 )
 
-# 讓使用者如果想自己微調，也可以在此輸入「自訂龍頭長度」
-custom_stem_str = st.text_input("若要自訂龍頭長度，請輸入數值 (mm)，否則留空套用建議", "")
+custom_stem_str = st.text_input(
+    "若要自訂龍頭長度，請輸入數值 (mm)，否則留空套用建議",
+    ""
+)
 
 # ----------------------------
 # 輔助函式：文字轉 float
@@ -119,7 +120,7 @@ def to_float(val_str):
 # ----------------------------
 st.header(text["step3"])
 if st.button(text["calculate_button"]):
-    # 將所有 text_input 嘗試轉成 float
+    # 先把所有 text_input 嘗試轉成 float
     inseam    = to_float(inseam_str)
     torso     = to_float(torso_str)
     forearm   = to_float(forearm_str)
@@ -253,25 +254,32 @@ if st.button(text["calculate_button"]):
         effective_reach = frame_reach + stem_horizontal
         delta_reach_adv = suggested_reach_adv - effective_reach
 
-        if delta_reach_adv > 20:
+        # （改為「Frame Reach：395±10 mm（龍頭長度＝10.0 cm）」樣式）
+        tolerance = 10  # ±10 mm
+        stem_length_cm = stem_length / 10  # 轉成 cm
+
+        # 顯示「Frame Reach：建議值 ±10 mm（龍頭長度＝X.X cm）」格式
+        st.markdown(
+            f"▶ Frame Reach：{suggested_reach_adv}±{tolerance} mm（龍頭長度＝{stem_length_cm:.1f} cm）"
+        )
+
+        # 接著再附上使用者目前的「實際有效 Reach」和差距說明
+        if delta_reach_adv > tolerance:
             needed = delta_reach_adv
             st.success(
-                f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
                 f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm + 龍頭水平 {stem_horizontal:.0f} mm "
-                f"(長度 {stem_length:.0f} mm，角度 {stem_angle}°) = {effective_reach:.0f} mm，"
-                f"比建議短 {needed} mm，可更換更長龍頭或角度調整 +{needed} mm。"
+                f"(長度 {stem_length:.0f} mm，角度 {stem_angle}°) = {effective_reach:.0f} mm，比建議短 {needed} mm，"
+                f"可更換更長龍頭或角度調整 +{needed} mm。"
             )
-        elif delta_reach_adv < -20:
+        elif delta_reach_adv < -tolerance:
             over = abs(delta_reach_adv)
             st.error(
-                f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
                 f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm + 龍頭水平 {stem_horizontal:.0f} mm "
-                f"(長度 {stem_length:.0f} mm，角度 {stem_angle}°) = {effective_reach:.0f} mm，"
-                f"比建議長 {over} mm，可更換更短龍頭或角度調整 −{over} mm。"
+                f"(長度 {stem_length:.0f} mm，角度 {stem_angle}°) = {effective_reach:.0f} mm，比建議長 {over} mm，"
+                f"可更換更短龍頭或角度調整 −{over} mm。"
             )
         else:
             st.success(
-                f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
                 f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm + 龍頭水平 {stem_horizontal:.0f} mm "
                 f"(長度 {stem_length:.0f} mm，角度 {stem_angle}°) = {effective_reach:.0f} mm，"
                 f"與建議相差 {delta_reach_adv} mm，可接受。"
