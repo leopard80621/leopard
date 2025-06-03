@@ -30,7 +30,7 @@ st.markdown(
 )
 
 # ----------------------------
-# 4. Step 1：展示所有量測欄位＋說明 Expander（使用 text_input，預設為空）
+# 4. Step 1：所有量測欄位＋說明 Expander（使用 text_input，預設空白）
 # ----------------------------
 st.header(text["step1"])
 with st.expander(text["expander_help"], expanded=False):
@@ -71,7 +71,7 @@ with col2:
     sitbone_str     = st.text_input(text["sitbone_label"],       "")
 
 # ----------------------------
-# 5. Step 2：自訂車架 Stack & Reach（也改用 text_input, 預設空白）
+# 5. Step 2：自訂車架 Stack & Reach（使用 text_input，預設空白）
 # ----------------------------
 st.header(text["step2"])
 default_stack_str = st.text_input(text["custom_stack_label"], "")
@@ -87,11 +87,11 @@ def to_float(val_str):
         return None
 
 # ----------------------------
-# 6. Step 3：按鈕觸發計算（僅進階公式，全部欄位都用 to_float() 轉）
+# 6. Step 3：按鈕觸發計算（僅進階公式）
 # ----------------------------
 st.header(text["step3"])
 if st.button(text["calculate_button"]):
-    # 6.1 先把所有輸入轉成浮點數，若空白或格式錯誤，就得到 None
+    # 6.1 將所有輸入嘗試轉成浮點數，若空白或格式錯誤，就得到 None
     inseam      = to_float(inseam_str)
     torso       = to_float(torso_str)
     forearm     = to_float(forearm_str)
@@ -106,7 +106,7 @@ if st.button(text["calculate_button"]):
     default_stack = to_float(default_stack_str)
     default_reach = to_float(default_reach_str)
 
-    # 6.2 檢查必要欄位：Inseam、Height、Shoulder、Default Stack、Default Reach
+    # 6.2 檢查必要欄位：Inseam、Height、Shoulder、車架 Stack、車架 Reach
     missing = []
     if inseam is None:
         missing.append("跨下長")
@@ -120,7 +120,7 @@ if st.button(text["calculate_button"]):
         missing.append("車架 Reach")
 
     if missing:
-        st.error("❗ 請確認以下欄位已正確填寫（數字形式）：\n- " + "、".join(missing))
+        st.error("❗ 請確認以下欄位已正確填寫（輸入數字格式）：\n- " + "、".join(missing))
     else:
         # ----------------------------------
         # 6.3 Stack（進階公式）
@@ -128,63 +128,77 @@ if st.button(text["calculate_button"]):
         st.markdown("---")
         st.markdown(f"#### {text['stack_title']}")
 
-        # (A) 計算座管到踏板中心(mm)：Inseam × 0.883 × 10
+        # (A) 計算座管到踏板中心 (MM)：Inseam × 0.883 × 10
         seat_height_mm = round(inseam * 0.883 * 10)
 
-        # (B) 計算胸骨到座管頂的垂直差： (Sternal - Inseam×0.883) × 10 × cos(lean_angle)
+        # (B) 計算胸骨到座管頂的垂直差 (MM)：(Sternal − Inseam×0.883) ×10 × cos(lean_angle)
         lean_angle = 18
         if sternal is not None:
             s_b_diff_mm = (sternal - (inseam * 0.883)) * 10
             upper_vert_mm = round(s_b_diff_mm * math.cos(math.radians(lean_angle)))
         else:
-            # 若沒填胸骨，就以 0 當作示範
+            # 若未填胸骨，高度差設 0 做示範
             upper_vert_mm = 0
 
-        # (C) 加權：alpha = 0.3
+        # (C) 加權組合：α=0.3
         alpha = 0.3
         raw_stack_mm = round(seat_height_mm * alpha + upper_vert_mm * (1 - alpha))
 
         # (D) 縮放：final_stack = round(raw_stack_mm × 0.82)
         suggested_stack_adv = round(raw_stack_mm * 0.82)
         delta_stack_adv = suggested_stack_adv - default_stack
-        spacer_adv = max(0.5, round(delta_stack_adv / 10 * 2) / 2)
 
-        st.success(
-            text["stack_result"].format(
-                suggested_adv=suggested_stack_adv,
-                delta_adv=delta_stack_adv,
-                spacer_adv=spacer_adv
+        # 根據 delta_stack_adv 判斷
+        if delta_stack_adv > 20:
+            # 車架 Stack 過低（低於建議值），顯示可用墊圈
+            spacer_adv = max(0.5, round(delta_stack_adv / 10 * 2) / 2)
+            st.success(
+                f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
+                f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，比建議低 {delta_stack_adv} mm，" +
+                f"可使用墊圈 {spacer_adv} cm。"
             )
-        )
+        elif delta_stack_adv < -20:
+            # 車架 Stack 過高（高於建議值）
+            st.error(
+                f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
+                f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，比建議高 {abs(delta_stack_adv)} mm，不建議此車架，" +
+                "或考慮降低座管／使用低把高度。"
+            )
+        else:
+            # 差距在 ±20 mm 以內，可接受
+            st.success(
+                f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
+                f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，與建議僅相差 {delta_stack_adv} mm，可接受。"
+            )
 
         # ----------------------------------
         # 6.4 Reach（進階公式）
         # ----------------------------------
         st.markdown(f"#### {text['reach_title']}")
 
-        # (1) Torso 水平投影 (mm)：
+        # (1) Torso 水平投影 (MM)
         if torso is not None:
             torso_horiz_mm = round(torso * math.cos(math.radians(lean_angle)) * 10)
         else:
             torso_horiz_mm = 0
 
-        # (2) Upper Arm 水平投影 (mm)：Arm × cos(60°) × 10
+        # (2) Upper Arm 水平投影 (MM)：Arm × cos(60°) × 10
         if arm is not None:
             arm_horiz_mm = round(arm * math.cos(math.radians(60)) * 10)
         else:
             arm_horiz_mm = 0
 
-        # (3) Forearm 水平投影 (mm)：Forearm × cos(75°) × 10
+        # (3) Forearm 水平投影 (MM)：Forearm × cos(75°) × 10
         if forearm is not None:
             forearm_horiz_mm = round(forearm * math.cos(math.radians(75)) * 10)
         else:
             forearm_horiz_mm = 0
 
-        # (4) 座管前傾骨盆水平投影 (mm)：Inseam × sin(73°) × 0.883 × 10
+        # (4) 骨盆前傾後水平投影 (MM)：Inseam × sin(73°) × 0.883 × 10
         seat_angle = 73
         pelvis_proj_mm = round(inseam * math.sin(math.radians(seat_angle)) * 0.883 * 10)
 
-        # (5) 坐骨寬補正 (mm)
+        # (5) 坐骨寬補正 (MM)
         if sitbone is not None:
             sitbone_mm = round(sitbone * 10)
         else:
@@ -192,17 +206,32 @@ if st.button(text["calculate_button"]):
 
         raw_reach_mm = torso_horiz_mm + arm_horiz_mm + forearm_horiz_mm + sitbone_mm - pelvis_proj_mm
 
-        # (6) 縮放：beta = 0.78
+        # (6) 縮放：β = 0.78
         beta = 0.78
         suggested_reach_adv = round(raw_reach_mm * beta)
         delta_reach_adv = suggested_reach_adv - default_reach
 
-        st.success(
-            text["reach_result"].format(
-                suggested_adv=suggested_reach_adv,
-                delta_adv=delta_reach_adv
+        # 根據 delta_reach_adv 判斷
+        if delta_reach_adv > 20:
+            # 車架 Reach 過短
+            st.success(
+                f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
+                f"  → 你輸入的車架 Reach = {default_reach:.0f} mm，比建議短 {delta_reach_adv} mm，" +
+                f"可透過更換龍頭 +{delta_reach_adv} mm 調整。"
             )
-        )
+        elif delta_reach_adv < -20:
+            # 車架 Reach 過長
+            st.error(
+                f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
+                f"  → 你輸入的車架 Reach = {default_reach:.0f} mm，比建議長 {abs(delta_reach_adv)} mm，" +
+                f"可透過更換龍頭 −{abs(delta_reach_adv)} mm 調整。"
+            )
+        else:
+            # 差距在 ±20 mm 以內，可接受
+            st.success(
+                f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
+                f"  → 你輸入的車架 Reach = {default_reach:.0f} mm，與建議僅相差 {delta_reach_adv} mm，可接受。"
+            )
 
         # ----------------------------------
         # 6.5 把手寬度建議
@@ -211,33 +240,18 @@ if st.button(text["calculate_button"]):
         st.info(text["shoulder_result"].format(value=round(shoulder)))
 
         # ----------------------------------
-        # 6.6 曲柄長度建議（改回依身高/性別區間）
+        # 6.6 曲柄長度建議（依身高分段）
         # ----------------------------------
         st.markdown(f"#### {text['crank_title']}")
-        # 原本的「進階公式」已移除，改成依身高與性別分段
         if height is not None:
-            # 先假設 gender 也改用 text 裡的順序，這邊硬寫成繁中第一個值為「男性」
-            # 如果未加入性別選項，這段就是直接以身高判斷。
-            gender = None  # 若程式中無法取得性別，此處可置 None，僅依身高
-            # 以下使用身高分段公式：
-            if gender == text["gender_options"][0] or gender == "Male":
-                # 男性
-                if height < 165:
-                    crank = 165
-                elif height < 175:
-                    crank = 170
-                elif height < 185:
-                    crank = 172.5
-                else:
-                    crank = 175
+            if height < 165:
+                crank = 165
+            elif height < 175:
+                crank = 170
+            elif height < 185:
+                crank = 172.5
             else:
-                # 女性 或無性別欄位時一律用女性公式
-                if height < 165:
-                    crank = 162.5
-                elif height < 175:
-                    crank = 167.5
-                else:
-                    crank = 170
+                crank = 175
             st.info(text["crank_result"].format(value_adv=crank))
         else:
             st.info("▶ 若要計算曲柄長度，請填寫「身高」。")
