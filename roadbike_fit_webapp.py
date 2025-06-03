@@ -71,11 +71,20 @@ with col2:
     sitbone_str     = st.text_input(text["sitbone_label"],       "")
 
 # ----------------------------
-# 5. Step 2：自訂車架 Stack & Reach（使用 text_input，預設空白）
+# 5. Step 2：自訂車架 Stack & Reach ＋ 龍頭長度選單
 # ----------------------------
 st.header(text["step2"])
 default_stack_str = st.text_input(text["custom_stack_label"], "")
-default_reach_str = st.text_input(text["custom_reach_label"], "")
+frame_reach_str   = st.text_input(text["custom_reach_label"], "")
+
+# 在下拉選單上方顯示「通常標配的龍頭長度」
+st.markdown("**此車架通常標配的龍頭長度：90 mm**  \n" +
+            "（使用者可從下列選單選擇龍頭長度）")
+stem_length = st.selectbox(
+    "選擇 龍頭長度 Stem Length (mm)",
+    options=[70, 80, 90, 100, 110],
+    index=2  # 預設選 90 mm
+)
 
 # ----------------------------
 # 輔助函式：將文字轉 float，若無法轉或為空，回傳 None
@@ -104,7 +113,8 @@ if st.button(text["calculate_button"]):
     sitbone     = to_float(sitbone_str)
 
     default_stack = to_float(default_stack_str)
-    default_reach = to_float(default_reach_str)
+    frame_reach   = to_float(frame_reach_str)
+    # stem_length 已經是整數或選項，無需轉型
 
     # 6.2 檢查必要欄位：Inseam、Height、Shoulder、車架 Stack、車架 Reach
     missing = []
@@ -116,7 +126,7 @@ if st.button(text["calculate_button"]):
         missing.append("肩寬")
     if default_stack is None:
         missing.append("車架 Stack")
-    if default_reach is None:
+    if frame_reach is None:
         missing.append("車架 Reach")
 
     if missing:
@@ -148,31 +158,40 @@ if st.button(text["calculate_button"]):
         suggested_stack_adv = round(raw_stack_mm * 0.82)
         delta_stack_adv = suggested_stack_adv - default_stack
 
-        # 根據 delta_stack_adv 判斷
-        if delta_stack_adv > 20:
-            # 車架 Stack 過低（低於建議值），顯示可用墊圈
-            spacer_adv = max(0.5, round(delta_stack_adv / 10 * 2) / 2)
-            st.success(
-                f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
-                f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，比建議低 {delta_stack_adv} mm，" +
-                f"可使用墊圈 {spacer_adv} cm。"
-            )
-        elif delta_stack_adv < -20:
-            # 車架 Stack 過高（高於建議值）
+        # 判斷若需要的墊圈超過 4 cm (即 40 mm)，就建議換大一號車架
+        spacer_adv = max(0.5, round(delta_stack_adv / 10 * 2) / 2)
+        if spacer_adv > 4.0:
+            # 需要超過 4 cm 的墊圈
             st.error(
                 f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
-                f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，比建議高 {abs(delta_stack_adv)} mm，不建議此車架，" +
-                "或考慮降低座管／使用低把高度。"
+                f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，比建議低 {delta_stack_adv} mm，"
+                f"需要墊圈 {spacer_adv} cm，已超過建議上限 4 cm，建議選擇大一號車架。"
             )
         else:
-            # 差距在 ±20 mm 以內，可接受
-            st.success(
-                f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
-                f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，與建議僅相差 {delta_stack_adv} mm，可接受。"
-            )
+            # 判斷正常範圍
+            if delta_stack_adv > 20:
+                # 車架 Stack 過低（低於建議值），可使用墊圈
+                st.success(
+                    f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
+                    f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，比建議低 {delta_stack_adv} mm，"
+                    f"可使用墊圈 {spacer_adv} cm。"
+                )
+            elif delta_stack_adv < -20:
+                # 車架 Stack 過高（高於建議值）
+                st.error(
+                    f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
+                    f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，比建議高 {abs(delta_stack_adv)} mm，"
+                    f"不建議此車架，或考慮降低座管／使用低把高度。"
+                )
+            else:
+                # 差距在 ±20 mm 以內，可接受
+                st.success(
+                    f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
+                    f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，與建議相差 {delta_stack_adv} mm，可接受。"
+                )
 
         # ----------------------------------
-        # 6.4 Reach（進階公式）
+        # 6.4 Reach（進階公式 + 納入龍頭長度計算）
         # ----------------------------------
         st.markdown(f"#### {text['reach_title']}")
 
@@ -209,28 +228,36 @@ if st.button(text["calculate_button"]):
         # (6) 縮放：β = 0.78
         beta = 0.78
         suggested_reach_adv = round(raw_reach_mm * beta)
-        delta_reach_adv = suggested_reach_adv - default_reach
 
-        # 根據 delta_reach_adv 判斷
+        # (7) 考慮龍頭長度：有效 Reach = 車架 Reach + Stem Length
+        effective_reach = frame_reach + stem_length
+        delta_reach_adv = suggested_reach_adv - effective_reach
+
+        # 判斷 Reach 差距
         if delta_reach_adv > 20:
-            # 車架 Reach 過短
+            # 有效 Reach 過短
+            needed = delta_reach_adv
             st.success(
                 f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
-                f"  → 你輸入的車架 Reach = {default_reach:.0f} mm，比建議短 {delta_reach_adv} mm，" +
-                f"可透過更換龍頭 +{delta_reach_adv} mm 調整。"
+                f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm ＋ " +
+                f"龍頭 {stem_length:.0f} mm = {effective_reach:.0f} mm，比建議短 {needed} mm，" +
+                f"可透過更換更長龍頭 +{needed} mm 調整。"
             )
         elif delta_reach_adv < -20:
-            # 車架 Reach 過長
+            # 有效 Reach 過長
+            over = abs(delta_reach_adv)
             st.error(
                 f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
-                f"  → 你輸入的車架 Reach = {default_reach:.0f} mm，比建議長 {abs(delta_reach_adv)} mm，" +
-                f"可透過更換龍頭 −{abs(delta_reach_adv)} mm 調整。"
+                f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm ＋ " +
+                f"龍頭 {stem_length:.0f} mm = {effective_reach:.0f} mm，比建議長 {over} mm，" +
+                f"可透過更換更短龍頭 −{over} mm 調整。"
             )
         else:
             # 差距在 ±20 mm 以內，可接受
             st.success(
                 f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
-                f"  → 你輸入的車架 Reach = {default_reach:.0f} mm，與建議僅相差 {delta_reach_adv} mm，可接受。"
+                f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm ＋ " +
+                f"龍頭 {stem_length:.0f} mm = {effective_reach:.0f} mm，與建議相差 {delta_reach_adv} mm，可接受。"
             )
 
         # ----------------------------------
