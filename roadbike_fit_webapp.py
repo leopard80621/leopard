@@ -71,20 +71,30 @@ with col2:
     sitbone_str     = st.text_input(text["sitbone_label"],       "")
 
 # ----------------------------
-# 5. Step 2：自訂車架 Stack & Reach ＋ 龍頭長度選單
+# 5. Step 2：自訂車架 Stack & Reach ＋ 龍頭長度 & 角度選擇
 # ----------------------------
 st.header(text["step2"])
 default_stack_str = st.text_input(text["custom_stack_label"], "")
 frame_reach_str   = st.text_input(text["custom_reach_label"], "")
 
-# 在下拉選單上方顯示「通常標配的龍頭長度」
+# 顯示「通常標配」示意：假設預設此車架標配 90 mm 龍頭
 st.markdown("**此車架通常標配的龍頭長度：90 mm**  \n" +
-            "（使用者可從下列選單選擇龍頭長度）")
-stem_length = st.selectbox(
-    "選擇 龍頭長度 Stem Length (mm)",
-    options=[70, 80, 90, 100, 110],
-    index=2  # 預設選 90 mm
-)
+            "（請使用下拉選單選擇你打算使用的龍頭長度與角度）")
+
+col3, col4 = st.columns(2)
+with col3:
+    stem_length = st.selectbox(
+        "選擇 龍頭長度 Stem Length (mm)",
+        options=[70, 80, 90, 100, 110],
+        index=2  # 預設 90 mm
+    )
+with col4:
+    # 龍頭角度：正值代表前端向上，負值代表向下降低水平距離。例如常見 +6° 或 −6°。
+    stem_angle = st.selectbox(
+        "龍頭角度 Stem Angle (°)",
+        options=[-10, -6, 0, 6, 10],
+        index=3  # 預設 6°
+    )
 
 # ----------------------------
 # 輔助函式：將文字轉 float，若無法轉或為空，回傳 None
@@ -114,9 +124,9 @@ if st.button(text["calculate_button"]):
 
     default_stack = to_float(default_stack_str)
     frame_reach   = to_float(frame_reach_str)
-    # stem_length 已經是整數或選項，無需轉型
+    # stem_length 與 stem_angle 已由 selectbox 取得，不需轉型
 
-    # 6.2 檢查必要欄位：Inseam、Height、Shoulder、車架 Stack、車架 Reach
+    # 6.2 檢查必要欄位：Inseam、Height、肩寬、車架 Stack、車架 Reach
     missing = []
     if inseam is None:
         missing.append("跨下長")
@@ -147,7 +157,6 @@ if st.button(text["calculate_button"]):
             s_b_diff_mm = (sternal - (inseam * 0.883)) * 10
             upper_vert_mm = round(s_b_diff_mm * math.cos(math.radians(lean_angle)))
         else:
-            # 若未填胸骨，高度差設 0 做示範
             upper_vert_mm = 0
 
         # (C) 加權組合：α=0.3
@@ -158,40 +167,35 @@ if st.button(text["calculate_button"]):
         suggested_stack_adv = round(raw_stack_mm * 0.82)
         delta_stack_adv = suggested_stack_adv - default_stack
 
-        # 判斷若需要的墊圈超過 4 cm (即 40 mm)，就建議換大一號車架
+        # 判斷若需要的墊圈超過 4 cm，建議換大一號車架
         spacer_adv = max(0.5, round(delta_stack_adv / 10 * 2) / 2)
         if spacer_adv > 4.0:
-            # 需要超過 4 cm 的墊圈
             st.error(
                 f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
                 f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，比建議低 {delta_stack_adv} mm，"
-                f"需要墊圈 {spacer_adv} cm，已超過建議上限 4 cm，建議選擇大一號車架。"
+                f"需要墊圈 {spacer_adv} cm，已超過 4 cm 上限，建議選擇大一號車架。"
             )
         else:
-            # 判斷正常範圍
             if delta_stack_adv > 20:
-                # 車架 Stack 過低（低於建議值），可使用墊圈
                 st.success(
                     f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
                     f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，比建議低 {delta_stack_adv} mm，"
                     f"可使用墊圈 {spacer_adv} cm。"
                 )
             elif delta_stack_adv < -20:
-                # 車架 Stack 過高（高於建議值）
                 st.error(
                     f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
                     f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，比建議高 {abs(delta_stack_adv)} mm，"
                     f"不建議此車架，或考慮降低座管／使用低把高度。"
                 )
             else:
-                # 差距在 ±20 mm 以內，可接受
                 st.success(
                     f"▶ 建議 Stack：{suggested_stack_adv} mm  \n"
                     f"  → 你輸入的車架 Stack = {default_stack:.0f} mm，與建議相差 {delta_stack_adv} mm，可接受。"
                 )
 
         # ----------------------------------
-        # 6.4 Reach（進階公式 + 納入龍頭長度計算）
+        # 6.4 Reach（進階公式 + 根據龍頭長度與角度計算水平投影）
         # ----------------------------------
         st.markdown(f"#### {text['reach_title']}")
 
@@ -201,19 +205,19 @@ if st.button(text["calculate_button"]):
         else:
             torso_horiz_mm = 0
 
-        # (2) Upper Arm 水平投影 (MM)：Arm × cos(60°) × 10
+        # (2) 上臂水平投影 (MM)：Arm × cos(60°) × 10
         if arm is not None:
             arm_horiz_mm = round(arm * math.cos(math.radians(60)) * 10)
         else:
             arm_horiz_mm = 0
 
-        # (3) Forearm 水平投影 (MM)：Forearm × cos(75°) × 10
+        # (3) 前臂水平投影 (MM)：Forearm × cos(75°) × 10
         if forearm is not None:
             forearm_horiz_mm = round(forearm * math.cos(math.radians(75)) * 10)
         else:
             forearm_horiz_mm = 0
 
-        # (4) 骨盆前傾後水平投影 (MM)：Inseam × sin(73°) × 0.883 × 10
+        # (4) 骨盆前傾後的水平投影 (MM)：Inseam × sin(73°) × 0.883 × 10
         seat_angle = 73
         pelvis_proj_mm = round(inseam * math.sin(math.radians(seat_angle)) * 0.883 * 10)
 
@@ -225,12 +229,16 @@ if st.button(text["calculate_button"]):
 
         raw_reach_mm = torso_horiz_mm + arm_horiz_mm + forearm_horiz_mm + sitbone_mm - pelvis_proj_mm
 
-        # (6) 縮放：β = 0.78
+        # (6) 進階建議 Reach：β = 0.78
         beta = 0.78
         suggested_reach_adv = round(raw_reach_mm * beta)
 
-        # (7) 考慮龍頭長度：有效 Reach = 車架 Reach + Stem Length
-        effective_reach = frame_reach + stem_length
+        # (7) 根據龍頭長度與角度計算「龍頭的水平投影」
+        #     stem_angle 是正值代表龍頭角度向上；cos 參數直接用絕對值
+        stem_horizontal = round(stem_length * math.cos(math.radians(abs(stem_angle))))
+
+        # 計算「有效 Reach」= 車架 Reach + 龍頭水平投影
+        effective_reach = frame_reach + stem_horizontal
         delta_reach_adv = suggested_reach_adv - effective_reach
 
         # 判斷 Reach 差距
@@ -239,25 +247,26 @@ if st.button(text["calculate_button"]):
             needed = delta_reach_adv
             st.success(
                 f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
-                f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm ＋ " +
-                f"龍頭 {stem_length:.0f} mm = {effective_reach:.0f} mm，比建議短 {needed} mm，" +
-                f"可透過更換更長龍頭 +{needed} mm 調整。"
+                f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm + " +
+                f"龍頭水平 {stem_horizontal:.0f} mm (長度 {stem_length} mm，角度 {stem_angle}°) = {effective_reach:.0f} mm，" +
+                f"比建議短 {needed} mm，可更換更長龍頭或調整角度 +{needed} mm。"
             )
         elif delta_reach_adv < -20:
             # 有效 Reach 過長
             over = abs(delta_reach_adv)
             st.error(
                 f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
-                f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm ＋ " +
-                f"龍頭 {stem_length:.0f} mm = {effective_reach:.0f} mm，比建議長 {over} mm，" +
-                f"可透過更換更短龍頭 −{over} mm 調整。"
+                f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm + " +
+                f"龍頭水平 {stem_horizontal:.0f} mm (長度 {stem_length} mm，角度 {stem_angle}°) = {effective_reach:.0f} mm，" +
+                f"比建議長 {over} mm，可更換更短龍頭或調整角度 −{over} mm。"
             )
         else:
             # 差距在 ±20 mm 以內，可接受
             st.success(
                 f"▶ 建議 Reach：{suggested_reach_adv} mm  \n"
-                f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm ＋ " +
-                f"龍頭 {stem_length:.0f} mm = {effective_reach:.0f} mm，與建議相差 {delta_reach_adv} mm，可接受。"
+                f"  → 你輸入的車架 Reach = {frame_reach:.0f} mm + " +
+                f"龍頭水平 {stem_horizontal:.0f} mm (長度 {stem_length} mm，角度 {stem_angle}°) = {effective_reach:.0f} mm，" +
+                f"與建議相差 {delta_reach_adv} mm，可接受。"
             )
 
         # ----------------------------------
